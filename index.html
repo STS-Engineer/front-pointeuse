@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Gestion des Présences - ZKTeco</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fas fa-fingerprint"></i>
+                    <div>
+                        <h1>ZKTeco Attendance System</h1>
+                        <p class="subtitle">Système de gestion des présences professionnel</p>
+                    </div>
+                </div>
+            </div>
+            <div class="header-info">
+                <div class="info-card">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span id="current-time">Chargement...</span>
+                        <small>Dernière mise à jour: <span id="last-update">-</span></small>
+                    </div>
+                </div>
+                <button id="refresh-btn" class="btn-primary">
+                    <i class="fas fa-sync-alt"></i> Rafraîchir
+                </button>
+            </div>
+        </header>
+
+        <!-- Dashboard Summary -->
+        <section class="dashboard">
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="card-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3 id="total-users">0</h3>
+                        <p>Employés</p>
+                        <small id="users-detail">Chargement...</small>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon green">
+                        <i class="fas fa-calendar-day"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3 id="total-days">0</h3>
+                        <p>Jours enregistrés</p>
+                        <small id="days-detail">Chargement...</small>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon orange">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3 id="total-logs">0</h3>
+                        <p>Points enregistrés</p>
+                        <small id="logs-detail">Chargement...</small>
+                    </div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-icon purple">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3 id="total-records">0</h3>
+                        <p>Enregistrements</p>
+                        <small id="records-detail">Chargement...</small>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="status-indicator">
+                <div class="status-item">
+                    <span class="status-dot" id="connection-dot"></span>
+                    <span id="connection-status">Connexion...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot data-dot"></span>
+                    <span id="data-status">Données...</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-dot api-dot"></span>
+                    <span id="api-status">API...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters -->
+        <section class="filters">
+            <div class="filter-group">
+                <label for="view-mode"><i class="fas fa-eye"></i> Mode d'affichage :</label>
+                <select id="view-mode" class="filter-input">
+                    <option value="all">Tous les pointages</option>
+                    <option value="by-date">Par jour</option>
+                    <option value="by-employee">Par employé</option>
+                    <option value="today">Aujourd'hui</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="date-filter"><i class="fas fa-calendar-alt"></i> Date :</label>
+                <input type="date" id="date-filter" class="filter-input">
+            </div>
+            
+            <div class="filter-group">
+                <label for="employee-filter"><i class="fas fa-user"></i> Employé :</label>
+                <select id="employee-filter" class="filter-input">
+                    <option value="">-- Tous les employés --</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="search-filter"><i class="fas fa-search"></i> Rechercher :</label>
+                <input type="text" id="search-filter" placeholder="Nom, matricule..." class="filter-input">
+            </div>
+            
+            <div class="filter-group">
+                <label for="sort-filter"><i class="fas fa-sort"></i> Trier par :</label>
+                <select id="sort-filter" class="filter-input">
+                    <option value="date-desc">Date (récent)</option>
+                    <option value="date-asc">Date (ancien)</option>
+                    <option value="name-asc">Nom (A-Z)</option>
+                    <option value="name-desc">Nom (Z-A)</option>
+                    <option value="hours-desc">Heures (décroissant)</option>
+                    <option value="hours-asc">Heures (croissant)</option>
+                    <option value="status">Statut</option>
+                </select>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="export-btn" class="btn-secondary">
+                    <i class="fas fa-file-export"></i> Exporter CSV
+                </button>
+                <button id="debug-btn" class="btn-tertiary">
+                    <i class="fas fa-bug"></i> Débogage
+                </button>
+                <button id="help-btn" class="btn-help">
+                    <i class="fas fa-question-circle"></i> Aide
+                </button>
+            </div>
+        </section>
+
+        <!-- Stats Section (dynamique) -->
+        <section id="stats-section" class="stats-section" style="display: none;">
+            <div class="stats-container">
+                <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
+                <div id="stats-content">
+                    <!-- Les statistiques seront chargées dynamiquement -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="table-header">
+                <h2 id="table-title">Liste des pointages</h2>
+                <div class="table-actions">
+                    <button id="toggle-stats" class="btn-small">
+                        <i class="fas fa-chart-bar"></i> Stats
+                    </button>
+                    <button id="toggle-view" class="btn-small">
+                        <i class="fas fa-th"></i> Vue
+                    </button>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table id="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Nom & Prénom</th>
+                                <th>Date</th>
+                                <th>Arrivée</th>
+                                <th>Départ</th>
+                                <th>Heures travaillées</th>
+                                <th>Points</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr class="loading-row">
+                                <td colspan="9">
+                                    <div class="loading-spinner">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Chargement des données...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="pagination">
+                <div class="pagination-info">
+                    <span id="page-info">Page 1 sur 1</span>
+                    <span class="results-info" id="results-info">0 résultats</span>
+                </div>
+                <div class="pagination-controls">
+                    <button id="first-page" class="pagination-btn" disabled>
+                        <i class="fas fa-angle-double-left"></i>
+                    </button>
+                    <button id="prev-page" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i> Précédent
+                    </button>
+                    <div class="page-numbers" id="page-numbers">
+                        <!-- Les numéros de page seront générés dynamiquement -->
+                    </div>
+                    <button id="next-page" class="pagination-btn" disabled>
+                        Suivant <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button id="last-page" class="pagination-btn" disabled>
+                        <i class="fas fa-angle-double-right"></i>
+                    </button>
+                </div>
+                <div class="pagination-size">
+                    <label for="page-size">Par page:</label>
+                    <select id="page-size" class="filter-input small">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-left">
+                <p>© 2026 Système de Gestion des Présences ZKTeco</p>
+                <p>Développé par Messai Majed – STS</p>
+                <p class="footer-info">Adresse IP: 10.10.205.10 | Port: 4370</p>
+            </div>
+            <div class="footer-right">
+                <div class="footer-status">
+                    <span class="status-label">Backend:</span>
+                    <span id="backend-status" class="status-indicator offline">● Hors ligne</span>
+                </div>
+                <div class="footer-status">
+                    <span class="status-label">Pointeuse:</span>
+                    <span id="device-status" class="status-indicator offline">● Déconnectée</span>
+                </div>
+                <div class="footer-status">
+                    <span class="status-label">Version:</span>
+                    <span class="version">2.0.0</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Details -->
+    <div id="details-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Détails de présence</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="close-modal-btn" class="btn-secondary">Fermer</button>
+                <button id="export-details-btn" class="btn-primary">
+                    <i class="fas fa-download"></i> Exporter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Debug Modal -->
+    <div id="debug-modal" class="modal debug-modal">
+        <div class="modal-content debug-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-bug"></i> Débogage et Diagnostic</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="debug-body">
+                <!-- Debug content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal help-modal">
+        <div class="modal-content help-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-question-circle"></i> Aide et Documentation</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="help-body">
+                <!-- Help content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin fa-3x"></i>
+            <h3>Chargement en cours</h3>
+            <p id="loading-message">Veuillez patienter...</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

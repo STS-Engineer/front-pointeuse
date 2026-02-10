@@ -1,0 +1,17 @@
+{
+  "name": "attendance-frontend",
+  "version": "2.0.0",
+  "description": "Interface d'administration des présences ZKTeco",
+  "scripts": {
+    "start": "npx live-server --port=8080 --host=localhost --cors --no-browser --entry-file=index.html",
+    "dev": "npx live-server --port=8080 --host=localhost --cors --no-browser --entry-file=index.html --watch=.",
+    "build": "echo \"Build frontend\" && exit 0",
+    "test": "echo \"Tests frontend\" && exit 0"
+  },
+  "keywords": ["frontend", "attendance", "zkteco", "dashboard"],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
