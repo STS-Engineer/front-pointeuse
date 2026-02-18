@@ -1,6 +1,6 @@
 class AttendanceSystem {
     constructor() {
-        this.baseUrl = 'https://pointeuse-back.azurewebsites.net';
+        this.baseUrl = 'https://pointeuse-back.azurewebsites.net/api';
         this.currentData = [];
         this.filteredData = [];
         this.employees = [];
