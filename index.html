@@ -100,7 +100,7 @@
         <!-- Filters -->
         <section class="filters">
             <div class="filter-group">
-                <label for="view-mode"><i class="fas fa-eye"></i> Mode d'affichage :</label>
+                <label for="view-mode"><i class="fas fa-eye"></i> Mode :</label>
                 <select id="view-mode" class="filter-input">
                     <option value="all">Tous les pointages</option>
                     <option value="by-date">Par jour</option>
@@ -117,34 +117,34 @@
             <div class="filter-group">
                 <label for="employee-filter"><i class="fas fa-user"></i> Employé :</label>
                 <select id="employee-filter" class="filter-input">
-                    <option value="">-- Tous les employés --</option>
+                    <option value="">Tous les employés</option>
                 </select>
             </div>
             
             <div class="filter-group">
-                <label for="search-filter"><i class="fas fa-search"></i> Rechercher :</label>
+                <label for="search-filter"><i class="fas fa-search"></i> Recherche :</label>
                 <input type="text" id="search-filter" placeholder="Nom, matricule..." class="filter-input">
             </div>
             
             <div class="filter-group">
-                <label for="sort-filter"><i class="fas fa-sort"></i> Trier par :</label>
+                <label for="sort-filter"><i class="fas fa-sort"></i> Trier :</label>
                 <select id="sort-filter" class="filter-input">
                     <option value="date-desc">Date (récent)</option>
                     <option value="date-asc">Date (ancien)</option>
                     <option value="name-asc">Nom (A-Z)</option>
                     <option value="name-desc">Nom (Z-A)</option>
-                    <option value="hours-desc">Heures (décroissant)</option>
-                    <option value="hours-asc">Heures (croissant)</option>
+                    <option value="hours-desc">Heures ↓</option>
+                    <option value="hours-asc">Heures ↑</option>
                     <option value="status">Statut</option>
                 </select>
             </div>
             
             <div class="action-buttons">
                 <button id="export-btn" class="btn-secondary">
-                    <i class="fas fa-file-export"></i> Exporter CSV
+                    <i class="fas fa-file-export"></i> Export
                 </button>
                 <button id="debug-btn" class="btn-tertiary">
-                    <i class="fas fa-bug"></i> Débogage
+                    <i class="fas fa-bug"></i> Debug
                 </button>
                 <button id="help-btn" class="btn-help">
                     <i class="fas fa-question-circle"></i> Aide
@@ -186,7 +186,7 @@
                                 <th>Date</th>
                                 <th>Arrivée</th>
                                 <th>Départ</th>
-                                <th>Heures travaillées</th>
+                                <th>Heures</th>
                                 <th>Points</th>
                                 <th>Statut</th>
                                 <th>Actions</th>
@@ -213,24 +213,24 @@
                     <span class="results-info" id="results-info">0 résultats</span>
                 </div>
                 <div class="pagination-controls">
-                    <button id="first-page" class="pagination-btn" disabled>
+                    <button id="first-page" class="pagination-btn" disabled title="Première page">
                         <i class="fas fa-angle-double-left"></i>
                     </button>
-                    <button id="prev-page" class="pagination-btn" disabled>
-                        <i class="fas fa-chevron-left"></i> Précédent
+                    <button id="prev-page" class="pagination-btn" disabled title="Page précédente">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
                     <div class="page-numbers" id="page-numbers">
                         <!-- Les numéros de page seront générés dynamiquement -->
                     </div>
-                    <button id="next-page" class="pagination-btn" disabled>
-                        Suivant <i class="fas fa-chevron-right"></i>
+                    <button id="next-page" class="pagination-btn" disabled title="Page suivante">
+                        <i class="fas fa-chevron-right"></i>
                     </button>
-                    <button id="last-page" class="pagination-btn" disabled>
+                    <button id="last-page" class="pagination-btn" disabled title="Dernière page">
                         <i class="fas fa-angle-double-right"></i>
                     </button>
                 </div>
                 <div class="pagination-size">
-                    <label for="page-size">Par page:</label>
+                    <label for="page-size">Lignes:</label>
                     <select id="page-size" class="filter-input small">
                         <option value="10">10</option>
                         <option value="20" selected>20</option>
