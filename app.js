@@ -1,3 +1,92 @@
+// ============================================================
+// ACCESS CONTROL - Only allow traffic from HR Management App
+// ============================================================
+(function enforceRefererPolicy() {
+    const ALLOWED_ORIGIN = 'https://avo-hr-managment.azurewebsites.net';
+    const referer = document.referrer;
+
+    const isAllowed = referer && referer.startsWith(ALLOWED_ORIGIN);
+
+    if (!isAllowed) {
+        // Clear the page and show access denied
+        document.documentElement.innerHTML = `
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+                <title>Accès refusé</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', sans-serif;
+                        background: #f1f5f9;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        height: 100vh;
+                    }
+                    .container {
+                        background: white;
+                        border-radius: 16px;
+                        padding: 3rem 4rem;
+                        text-align: center;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                        max-width: 480px;
+                    }
+                    .icon {
+                        font-size: 4rem;
+                        margin-bottom: 1.5rem;
+                    }
+                    h1 {
+                        color: #dc2626;
+                        font-size: 1.75rem;
+                        margin-bottom: 1rem;
+                    }
+                    p {
+                        color: #6b7280;
+                        font-size: 1rem;
+                        line-height: 1.6;
+                        margin-bottom: 2rem;
+                    }
+                    a {
+                        display: inline-block;
+                        background: #2563eb;
+                        color: white;
+                        padding: 0.75rem 2rem;
+                        border-radius: 8px;
+                        text-decoration: none;
+                        font-weight: 600;
+                        transition: background 0.2s;
+                    }
+                    a:hover { background: #1d4ed8; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="icon">🔒</div>
+                    <h1>Accès refusé</h1>
+                    <p>
+                        Cette page est accessible uniquement via
+                        l'application <strong>AVOCarbon HR Management</strong>.
+                        Veuillez vous connecter depuis l'application principale.
+                    </p>
+                    <a href="https://avo-hr-managment.azurewebsites.net/dashboard">
+                        Aller vers HR Management
+                    </a>
+                </div>
+            </body>
+            </html>
+        `;
+        // Stop all further JS execution
+        throw new Error('Access denied: Direct access not allowed.');
+    }
+})();
+
+// ============================================================
+// ATTENDANCE SYSTEM - Normal code below
+// ============================================================
+
 class AttendanceSystem {
     constructor() {
         this.baseUrl = 'https://pointeuse-back.azurewebsites.net/api';
@@ -157,7 +246,6 @@ class AttendanceSystem {
         try {
             this.showLoading('Chargement des données...');
             
-            // Test connexion backend
             const healthResponse = await fetch(`${this.baseUrl}/health`);
             if (healthResponse.ok) {
                 this.backendStatus.textContent = '● En ligne';
@@ -167,14 +255,12 @@ class AttendanceSystem {
                 this.backendStatus.className = 'status-indicator offline';
             }
             
-            // Charger le résumé
             const summaryResponse = await fetch(`${this.baseUrl}/summary`);
             const summaryData = await summaryResponse.json();
             
             if (summaryData.success) {
                 this.updateSummary(summaryData.summary);
                 
-                // Mettre à jour le statut de la pointeuse
                 if (summaryData.summary.isConnected) {
                     this.deviceStatus.textContent = '● Connectée';
                     this.deviceStatus.className = 'status-indicator online';
@@ -184,7 +270,6 @@ class AttendanceSystem {
                 }
             }
             
-            // Charger les employés pour le filtre
             const usersResponse = await fetch(`${this.baseUrl}/users`);
             const usersData = await usersResponse.json();
             
@@ -193,7 +278,6 @@ class AttendanceSystem {
                 this.populateEmployeeFilter();
             }
             
-            // Charger les données selon la vue
             await this.loadDataByView();
             
             this.hideLoading();
@@ -260,7 +344,6 @@ class AttendanceSystem {
             if (data.success) {
                 this.currentData = data.data || [];
                 
-                // Afficher les stats spécifiques
                 if (data.stats) {
                     this.showStats(data.stats);
                 } else if (this.currentView === 'by-date') {
@@ -466,11 +549,10 @@ class AttendanceSystem {
             const hoursColor = this.getHoursColor(record.hoursWorked);
             const isToday = this.isToday(record.date);
             
-            // Formater les entrées pour l'affichage
             let entriesDisplay = '';
             if (record.entries && record.entries.length > 0) {
                 entriesDisplay = record.entries.map(entry => {
-                    const typeIcon = entry.type === 0 ? '⬇️' : '⬆️'; // 0=arrivée, 1=départ
+                    const typeIcon = entry.type === 0 ? '⬇️' : '⬆️';
                     const typeClass = entry.type === 0 ? 'arrival-entry' : 'departure-entry';
                     return `<span class="time-entry ${typeClass}">${typeIcon} ${entry.time}</span>`;
                 }).join(' ');
@@ -642,7 +724,6 @@ class AttendanceSystem {
                 `;
             }
             
-            // Ajouter des informations de débogage si nécessaire
             if (record.pointeuseUserId) {
                 modalHTML += `
                     <div class="debug-section">
@@ -756,7 +837,6 @@ class AttendanceSystem {
             headers.map(header => {
                 const value = row[header];
                 if (value === null || value === undefined) return '';
-                // Échapper les guillemets et les virgules
                 const stringValue = value.toString();
                 if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
                     return `"${stringValue.replace(/"/g, '""')}"`;
@@ -771,13 +851,11 @@ class AttendanceSystem {
         const totalPages = Math.ceil(this.filteredData.length / this.itemsPerPage);
         this.pageInfo.textContent = `Page ${this.currentPage} sur ${totalPages || 1}`;
         
-        // Mettre à jour les boutons
         this.prevPageBtn.disabled = this.currentPage === 1;
         this.nextPageBtn.disabled = this.currentPage === totalPages || totalPages === 0;
         this.firstPageBtn.disabled = this.currentPage === 1;
         this.lastPageBtn.disabled = this.currentPage === totalPages || totalPages === 0;
         
-        // Mettre à jour les numéros de page
         this.updatePageNumbers(totalPages);
     }
 
@@ -794,7 +872,6 @@ class AttendanceSystem {
             startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
         
-        // Bouton précédent
         if (startPage > 1) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'page-ellipsis';
@@ -802,7 +879,6 @@ class AttendanceSystem {
             this.pageNumbers.appendChild(ellipsis);
         }
         
-        // Numéros de page
         for (let i = startPage; i <= endPage; i++) {
             const pageBtn = document.createElement('button');
             pageBtn.className = `page-number ${i === this.currentPage ? 'active' : ''}`;
@@ -811,7 +887,6 @@ class AttendanceSystem {
             this.pageNumbers.appendChild(pageBtn);
         }
         
-        // Bouton suivant
         if (endPage < totalPages) {
             const ellipsis = document.createElement('span');
             ellipsis.className = 'page-ellipsis';
@@ -886,7 +961,6 @@ class AttendanceSystem {
     }
 
     startAutoRefresh() {
-        // Rafraîchir toutes les 2 minutes
         setInterval(() => {
             if (document.visibilityState === 'visible') {
                 this.refreshData();
@@ -937,7 +1011,6 @@ class AttendanceSystem {
         
         document.getElementById('notification-container').appendChild(notification);
         
-        // Supprimer automatiquement après 5 secondes
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.style.animation = 'slideOutRight 0.3s ease';
@@ -1030,11 +1103,9 @@ class AttendanceSystem {
         try {
             this.showLoading('Exécution des tests...');
             
-            // Test de connexion
             const connectionTest = await fetch(`${this.baseUrl}/test-connection`);
             const connectionResult = await connectionTest.json();
             
-            // Test des données brutes
             const rawTest = await fetch(`${this.baseUrl}/debug/raw-attendances`);
             const rawResult = await rawTest.json();
             
@@ -1081,7 +1152,6 @@ class AttendanceSystem {
             this.refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Forcer rafraîchissement...';
             this.refreshBtn.disabled = true;
             
-            // Appeler plusieurs fois pour s'assurer de la récupération
             for (let i = 0; i < 2; i++) {
                 const response = await fetch(`${this.baseUrl}/refresh`, { method: 'POST' });
                 const data = await response.json();
@@ -1095,7 +1165,6 @@ class AttendanceSystem {
             await this.loadDataByView();
             this.showNotification('Rafraîchissement forcé terminé', 'success');
             
-            // Fermer le modal de débogage
             if (this.debugModal) this.debugModal.style.display = 'none';
             
         } catch (error) {
@@ -1165,12 +1234,10 @@ class AttendanceSystem {
     getAttendanceStatus(record) {
         if (!record) return 'Inconnu';
         
-        // Utiliser le statut déjà calculé si disponible
         if (record.status && record.status !== 'Absent') {
             return record.status;
         }
         
-        // Déterminer le statut basé sur les heures
         if (!record.arrivalTime && !record.departureTime) {
             return 'Absent';
         }
@@ -1184,15 +1251,14 @@ class AttendanceSystem {
             return 'Arrivée manquante';
         }
         
-        // Calculer si en retard
         const arrivalParts = record.arrivalTime.split(':');
         const arrivalHour = parseInt(arrivalParts[0]);
         const arrivalMinute = parseInt(arrivalParts[1]);
         const arrivalTotalMinutes = arrivalHour * 60 + arrivalMinute;
         
-        if (arrivalTotalMinutes < 8 * 60) { // Avant 8h
+        if (arrivalTotalMinutes < 8 * 60) {
             return 'À l\'heure';
-        } else if (arrivalTotalMinutes <= 9 * 60) { // Avant 9h
+        } else if (arrivalTotalMinutes <= 9 * 60) {
             return 'Présent';
         } else {
             return 'En retard';
@@ -1253,7 +1319,6 @@ document.addEventListener('DOMContentLoaded', () => {
 // Styles CSS supplémentaires
 const additionalStyles = document.createElement('style');
 additionalStyles.textContent = `
-    /* Styles pour les badges */
     .today-badge {
         background: #dbeafe;
         color: #1e40af;
@@ -1273,7 +1338,6 @@ additionalStyles.textContent = `
         margin-left: 8px;
     }
     
-    /* Styles pour les heures */
     .time-display {
         font-weight: 600;
         font-size: 1.1rem;
@@ -1309,7 +1373,6 @@ additionalStyles.textContent = `
         display: inline-block;
     }
     
-    /* Styles pour les entrées de temps */
     .entries-container {
         display: flex;
         flex-wrap: wrap;
@@ -1335,7 +1398,6 @@ additionalStyles.textContent = `
         color: #991b1b;
     }
     
-    /* Bouton action */
     .action-btn {
         padding: 4px 8px;
         background: #f3f4f6;
@@ -1350,7 +1412,6 @@ additionalStyles.textContent = `
         border-color: #9ca3af;
     }
     
-    /* Pagination améliorée */
     .page-number {
         min-width: 36px;
         height: 36px;
@@ -1382,7 +1443,6 @@ additionalStyles.textContent = `
         color: #6b7280;
     }
     
-    /* Section statistiques */
     .stats-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -1410,7 +1470,6 @@ additionalStyles.textContent = `
         color: #6b7280;
     }
     
-    /* Modal amélioré */
     .info-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1464,37 +1523,14 @@ additionalStyles.textContent = `
         color: white;
     }
     
-    .arrival-card .card-icon {
-        background: linear-gradient(135deg, #10b981, #059669);
-    }
+    .arrival-card .card-icon { background: linear-gradient(135deg, #10b981, #059669); }
+    .departure-card .card-icon { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .hours-card .card-icon { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .status-card .card-icon { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
     
-    .departure-card .card-icon {
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-    }
-    
-    .hours-card .card-icon {
-        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    }
-    
-    .status-card .card-icon {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    }
-    
-    .card-content {
-        flex: 1;
-    }
-    
-    .card-label {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-bottom: 0.25rem;
-    }
-    
-    .card-value {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-    }
+    .card-content { flex: 1; }
+    .card-label { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+    .card-value { font-size: 1.25rem; font-weight: 600; color: #1f2937; }
     
     .entries-grid {
         display: grid;
@@ -1503,52 +1539,16 @@ additionalStyles.textContent = `
         margin: 1rem 0;
     }
     
-    .entry-card {
-        padding: 0.75rem;
-        border-radius: 6px;
-        text-align: center;
-    }
+    .entry-card { padding: 0.75rem; border-radius: 6px; text-align: center; }
+    .entry-arrival { background: #d1fae5; border: 1px solid #a7f3d0; }
+    .entry-departure { background: #fee2e2; border: 1px solid #fecaca; }
+    .entry-time { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .entry-type { font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem; }
+    .entry-timestamp { font-size: 0.7rem; color: #9ca3af; }
     
-    .entry-arrival {
-        background: #d1fae5;
-        border: 1px solid #a7f3d0;
-    }
+    .no-entries { text-align: center; padding: 2rem; color: #9ca3af; }
+    .no-entries i { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
     
-    .entry-departure {
-        background: #fee2e2;
-        border: 1px solid #fecaca;
-    }
-    
-    .entry-time {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-    
-    .entry-type {
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-bottom: 0.25rem;
-    }
-    
-    .entry-timestamp {
-        font-size: 0.7rem;
-        color: #9ca3af;
-    }
-    
-    .no-entries {
-        text-align: center;
-        padding: 2rem;
-        color: #9ca3af;
-    }
-    
-    .no-entries i {
-        font-size: 3rem;
-        margin-bottom: 1rem;
-        opacity: 0.5;
-    }
-    
-    /* Débogage */
     .debug-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1560,209 +1560,52 @@ additionalStyles.textContent = `
         border: 1px solid #e5e7eb;
     }
     
-    .debug-stat {
-        text-align: center;
-    }
+    .debug-stat { text-align: center; }
+    .matches-list { max-height: 300px; overflow-y: auto; margin: 1rem 0; }
     
-    .stat-label {
-        display: block;
-        font-size: 0.75rem;
-        color: #6b7280;
-        margin-bottom: 0.25rem;
-    }
+    .match-item { padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px; border-left: 4px solid; }
+    .match-item.matched { background: #d1fae5; border-left-color: #10b981; }
+    .match-item.not-matched { background: #fee2e2; border-left-color: #ef4444; }
+    .match-info { font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .match-result { font-size: 0.875rem; font-weight: 500; }
+    .match-result .success { color: #059669; }
+    .match-result .error { color: #dc2626; }
     
-    .stat-value {
-        display: block;
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: #1f2937;
-    }
+    .debug-actions { display: flex; gap: 1rem; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; }
     
-    .matches-list {
-        max-height: 300px;
-        overflow-y: auto;
-        margin: 1rem 0;
-    }
+    .test-results { margin: 1.5rem 0; }
+    .test-result { padding: 1rem; margin-bottom: 0.75rem; border-radius: 6px; border: 1px solid; }
+    .test-result.success { background: #d1fae5; border-color: #10b981; }
+    .test-result.error { background: #fee2e2; border-color: #ef4444; }
+    .test-title { font-weight: 600; margin-bottom: 0.25rem; }
+    .test-status { font-size: 0.875rem; margin-bottom: 0.25rem; }
+    .test-message { font-size: 0.75rem; color: #6b7280; }
     
-    .match-item {
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        border-radius: 6px;
-        border-left: 4px solid;
-    }
+    .test-advice { padding: 1rem; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b; margin-top: 1rem; }
+    .test-advice h5 { margin-bottom: 0.5rem; color: #92400e; }
+    .test-advice ul { padding-left: 1.5rem; font-size: 0.875rem; color: #92400e; }
+    .test-advice li { margin-bottom: 0.25rem; }
     
-    .match-item.matched {
-        background: #d1fae5;
-        border-left-color: #10b981;
-    }
+    .status-present { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border: 1px solid #10b981; }
+    .status-late { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; border: 1px solid #f59e0b; }
+    .status-absent { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; border: 1px solid #ef4444; }
+    .status-inprogress { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; border: 1px solid #3b82f6; }
+    .status-warning { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; border: 1px solid #f59e0b; }
     
-    .match-item.not-matched {
-        background: #fee2e2;
-        border-left-color: #ef4444;
-    }
-    
-    .match-info {
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .match-result {
-        font-size: 0.875rem;
-        font-weight: 500;
-    }
-    
-    .match-result .success {
-        color: #059669;
-    }
-    
-    .match-result .error {
-        color: #dc2626;
-    }
-    
-    .debug-actions {
-        display: flex;
-        gap: 1rem;
-        margin-top: 1.5rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e5e7eb;
-    }
-    
-    .test-results {
-        margin: 1.5rem 0;
-    }
-    
-    .test-result {
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border-radius: 6px;
-        border: 1px solid;
-    }
-    
-    .test-result.success {
-        background: #d1fae5;
-        border-color: #10b981;
-    }
-    
-    .test-result.error {
-        background: #fee2e2;
-        border-color: #ef4444;
-    }
-    
-    .test-title {
-        font-weight: 600;
-        margin-bottom: 0.25rem;
-    }
-    
-    .test-status {
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .test-message {
-        font-size: 0.75rem;
-        color: #6b7280;
-    }
-    
-    .test-advice {
-        padding: 1rem;
-        background: #fef3c7;
-        border-radius: 6px;
-        border: 1px solid #f59e0b;
-        margin-top: 1rem;
-    }
-    
-    .test-advice h5 {
-        margin-bottom: 0.5rem;
-        color: #92400e;
-    }
-    
-    .test-advice ul {
-        padding-left: 1.5rem;
-        font-size: 0.875rem;
-        color: #92400e;
-    }
-    
-    .test-advice li {
-        margin-bottom: 0.25rem;
-    }
-    
-    /* Status badges améliorés */
-    .status-present {
-        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-        color: #065f46;
-        border: 1px solid #10b981;
-    }
-    
-    .status-late {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        color: #92400e;
-        border: 1px solid #f59e0b;
-    }
-    
-    .status-absent {
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-        color: #991b1b;
-        border: 1px solid #ef4444;
-    }
-    
-    .status-inprogress {
-        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-        color: #1e40af;
-        border: 1px solid #3b82f6;
-    }
-    
-    .status-warning {
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        color: #92400e;
-        border: 1px solid #f59e0b;
-    }
-    
-    /* Notifications améliorées */
-    .notification {
-        animation: slideInRight 0.3s ease;
-        margin-bottom: 0.5rem;
-    }
-    
-    .notification-success {
-        border-left-color: #10b981;
-        background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-    }
-    
-    .notification-error {
-        border-left-color: #ef4444;
-        background: linear-gradient(135deg, #fee2e2, #fecaca);
-    }
-    
-    .notification-warning {
-        border-left-color: #f59e0b;
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-    }
-    
-    .notification-info {
-        border-left-color: #3b82f6;
-        background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    }
+    .notification { animation: slideInRight 0.3s ease; margin-bottom: 0.5rem; }
+    .notification-success { border-left-color: #10b981; background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
+    .notification-error { border-left-color: #ef4444; background: linear-gradient(135deg, #fee2e2, #fecaca); }
+    .notification-warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #fef3c7, #fde68a); }
+    .notification-info { border-left-color: #3b82f6; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
     
     @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
     }
     
     @keyframes slideOutRight {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
     }
 `;
 document.head.appendChild(additionalStyles);
