@@ -2,10 +2,16 @@
 // ACCESS CONTROL - Only allow traffic from HR Management App
 // ============================================================
 (function enforceRefererPolicy() {
-    const isAllowed = localStorage.getItem('pointeuse-hr-access') === 'true';
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    const expected = btoa('hr-access-' + new Date().toDateString());
 
-    // Clear the flag immediately so it can't be reused by refreshing the page
-    localStorage.removeItem('pointeuse-hr-access');
+    const isAllowed = token === expected;
+
+    // Clean the token from the URL bar so it's not visible
+    if (isAllowed) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
 
     if (!isAllowed) {
         document.documentElement.innerHTML = `
