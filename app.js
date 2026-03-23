@@ -433,17 +433,25 @@ class AttendanceSystem {
                 case 'date-asc': return a.date.localeCompare(b.date);
                 case 'name-asc': return (a.name || '').localeCompare(b.name || '');
                 case 'name-desc': return (b.name || '').localeCompare(a.name || '');
-                case 'hours-desc': return parseFloat(b.hoursWorked || 0) - parseFloat(a.hoursWorked || 0);
-                case 'hours-asc': return parseFloat(a.hoursWorked || 0) - parseFloat(b.hoursWorked || 0);
+                // ── FIXED: fallback to arrivalTime when hoursWorked is 0 (En cours) ──
+                case 'hours-desc':
+                    if (parseFloat(a.hoursWorked || 0) === 0 && parseFloat(b.hoursWorked || 0) === 0) {
+                        return (b.arrivalTime || '00:00').localeCompare(a.arrivalTime || '00:00');
+                    }
+                    return parseFloat(b.hoursWorked || 0) - parseFloat(a.hoursWorked || 0);
+                case 'hours-asc':
+                    if (parseFloat(a.hoursWorked || 0) === 0 && parseFloat(b.hoursWorked || 0) === 0) {
+                        return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
+                    }
+                    return parseFloat(a.hoursWorked || 0) - parseFloat(b.hoursWorked || 0);
+                // ─────────────────────────────────────────────────────────────────────
                 case 'status':
                     const statusOrder = { 'À l\'heure': 0, 'Présent': 1, 'En cours': 2, 'Arrivée manquante': 3, 'En retard': 4, 'Absent': 5, 'Présent (départ manquant)': 6 };
                     return (statusOrder[this.getAttendanceStatus(a)] || 7) - (statusOrder[this.getAttendanceStatus(b)] || 7);
-                // ── NEW: sort by arrival time ──────────────────────────────
                 case 'arrival-asc':
                     return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
                 case 'arrival-desc':
-                    return (b.arrivalTime || '').localeCompare(a.arrivalTime || '');
-                // ──────────────────────────────────────────────────────────
+                    return (b.arrivalTime || '00:00').localeCompare(a.arrivalTime || '00:00');
                 default: return 0;
             }
         });
