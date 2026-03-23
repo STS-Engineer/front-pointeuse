@@ -8,7 +8,6 @@
 
     const isAllowed = token === expected;
 
-    // Clean the token from the URL bar so it's not visible
     if (isAllowed) {
         window.history.replaceState({}, document.title, window.location.pathname);
     }
@@ -87,7 +86,7 @@ class AttendanceSystem {
         this.employees = [];
         this.currentPage = 1;
         this.itemsPerPage = 20;
-        this.currentView = 'all'; // 'all', 'by-date', 'by-employee', 'today'
+        this.currentView = 'all';
         this.currentDate = null;
         this.currentEmployeeId = null;
         
@@ -439,6 +438,12 @@ class AttendanceSystem {
                 case 'status':
                     const statusOrder = { 'À l\'heure': 0, 'Présent': 1, 'En cours': 2, 'Arrivée manquante': 3, 'En retard': 4, 'Absent': 5, 'Présent (départ manquant)': 6 };
                     return (statusOrder[this.getAttendanceStatus(a)] || 7) - (statusOrder[this.getAttendanceStatus(b)] || 7);
+                // ── NEW: sort by arrival time ──────────────────────────────
+                case 'arrival-asc':
+                    return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
+                case 'arrival-desc':
+                    return (b.arrivalTime || '').localeCompare(a.arrivalTime || '');
+                // ──────────────────────────────────────────────────────────
                 default: return 0;
             }
         });
