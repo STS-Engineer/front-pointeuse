@@ -409,6 +409,12 @@ class AttendanceSystem {
             });
     }
 
+    // ── HELPER: safely parse hoursWorked whether it's 7.5 or "7.5h" or null ──
+    parseHours(val) {
+        if (!val) return 0;
+        return parseFloat(String(val).replace('h', '')) || 0;
+    }
+
     filterAndSortData() {
         this.filteredData = this.currentData.filter(record => {
             let matches = true;
@@ -425,7 +431,7 @@ class AttendanceSystem {
             }
             return matches;
         });
-        
+
         const sortValue = this.sortFilter.value;
         this.filteredData.sort((a, b) => {
             switch (sortValue) {
@@ -433,21 +439,33 @@ class AttendanceSystem {
                 case 'date-asc': return a.date.localeCompare(b.date);
                 case 'name-asc': return (a.name || '').localeCompare(b.name || '');
                 case 'name-desc': return (b.name || '').localeCompare(a.name || '');
-                // ── FIXED: fallback to arrivalTime when hoursWorked is 0 (En cours) ──
-                case 'hours-desc':
-                    if (parseFloat(a.hoursWorked || 0) === 0 && parseFloat(b.hoursWorked || 0) === 0) {
+                case 'hours-desc': {
+                    const ha = this.parseHours(a.hoursWorked);
+                    const hb = this.parseHours(b.hoursWorked);
+                    // both still working (0h) → sort by latest arrival first
+                    if (ha === 0 && hb === 0) {
                         return (b.arrivalTime || '00:00').localeCompare(a.arrivalTime || '00:00');
                     }
-                    return parseFloat(b.hoursWorked || 0) - parseFloat(a.hoursWorked || 0);
-                case 'hours-asc':
-                    if (parseFloat(a.hoursWorked || 0) === 0 && parseFloat(b.hoursWorked || 0) === 0) {
+                    // one has hours, one doesn't → the one with hours goes first
+                    if (ha === 0) return 1;
+                    if (hb === 0) return -1;
+                    return hb - ha;
+                }
+                case 'hours-asc': {
+                    const ha = this.parseHours(a.hoursWorked);
+                    const hb = this.parseHours(b.hoursWorked);
+                    // both still working (0h) → sort by earliest arrival first
+                    if (ha === 0 && hb === 0) {
                         return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
                     }
-                    return parseFloat(a.hoursWorked || 0) - parseFloat(b.hoursWorked || 0);
-                // ─────────────────────────────────────────────────────────────────────
-                case 'status':
+                    if (ha === 0) return 1;
+                    if (hb === 0) return -1;
+                    return ha - hb;
+                }
+                case 'status': {
                     const statusOrder = { 'À l\'heure': 0, 'Présent': 1, 'En cours': 2, 'Arrivée manquante': 3, 'En retard': 4, 'Absent': 5, 'Présent (départ manquant)': 6 };
                     return (statusOrder[this.getAttendanceStatus(a)] || 7) - (statusOrder[this.getAttendanceStatus(b)] || 7);
+                }
                 case 'arrival-asc':
                     return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
                 case 'arrival-desc':
@@ -455,7 +473,7 @@ class AttendanceSystem {
                 default: return 0;
             }
         });
-        
+
         this.renderTable();
         this.updatePagination();
     }
