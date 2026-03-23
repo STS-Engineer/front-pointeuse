@@ -451,6 +451,15 @@ class AttendanceSystem {
                     return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
                 case 'arrival-desc':
                     return (b.arrivalTime || '00:00').localeCompare(a.arrivalTime || '00:00');
+
+                // Heures ↑  => sort by earliest departure first
+                case 'hours-asc':
+                    return (a.departureTime || '99:99').localeCompare(b.departureTime || '99:99');
+
+                // Heures ↓  => sort by earliest arrival first
+                case 'hours-desc':
+                    return (a.arrivalTime || '99:99').localeCompare(b.arrivalTime || '99:99');
+
                 default: return 0;
             }
         });
