@@ -1,7 +1,7 @@
 // ============================================================
 // ACCESS CONTROL
 // ============================================================
-(function enforceRefererPolicy() {
+/*(function enforceRefererPolicy() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('token');
     const expected = btoa('hr-access-' + new Date().toDateString());
@@ -26,7 +26,7 @@
             </div></body></html>`;
         throw new Error('Access denied');
     }
-})();
+})();*/
 // ============================================================
 // ATTENDANCE SYSTEM
 // ============================================================
