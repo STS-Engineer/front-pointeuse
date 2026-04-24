@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!--<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -237,7 +237,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <div class="logo-section">
                 <div class="logo">
@@ -282,9 +281,7 @@
             </button>
         </div>
 
-        <!-- DASHBOARD PAGE -->
         <div id="dashboardPage">
-            <!-- Dashboard Summary -->
             <section class="dashboard">
                 <div class="summary-cards">
                     <div class="summary-card">
@@ -348,7 +345,6 @@
                 </div>
             </section>
 
-            <!-- Filters -->
             <section class="filters">
                 <div class="filter-group">
                     <label for="view-mode"><i class="fas fa-eye"></i> Mode :</label>
@@ -403,7 +399,6 @@
                 </div>
             </section>
 
-            <!-- Stats Section (dynamique) -->
             <section id="stats-section" class="stats-section" style="display: none;">
                 <div class="stats-container">
                     <h3><i class="fas fa-chart-bar"></i> Statistiques</h3>
@@ -411,7 +406,6 @@
                 </div>
             </section>
 
-            <!-- Main Content -->
             <main class="main-content">
                 <div class="table-header">
                     <h2 id="table-title">Liste des pointages</h2>
@@ -455,7 +449,6 @@
                     </div>
                 </div>
 
-                <!-- Pagination -->
                 <div class="pagination" id="pagination">
                     <div class="pagination-info">
                         <span id="page-info">Page 1 sur 1</span>
@@ -489,7 +482,6 @@
             </main>
         </div>
 
-        <!-- REPORTS PAGE -->
         <div id="reportsPage" class="hidden-page">
             <div class="reports-wrapper">
                 <div class="report-top-actions">
@@ -550,7 +542,6 @@
             </div>
         </div>
 
-        <!-- Footer -->
         <footer class="footer">
             <div class="footer-left">
                 <p>© 2026 Système de Gestion des Présences ZKTeco</p>
@@ -574,7 +565,6 @@
         </footer>
     </div>
 
-    <!-- Modal for Details -->
     <div id="details-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -591,7 +581,6 @@
         </div>
     </div>
 
-    <!-- Debug Modal -->
     <div id="debug-modal" class="modal debug-modal">
         <div class="modal-content debug-content">
             <div class="modal-header">
@@ -602,7 +591,6 @@
         </div>
     </div>
 
-    <!-- Help Modal -->
     <div id="help-modal" class="modal help-modal">
         <div class="modal-content help-content">
             <div class="modal-header">
@@ -613,10 +601,8 @@
         </div>
     </div>
 
-    <!-- Notification Container -->
     <div id="notification-container"></div>
 
-    <!-- Loading Overlay -->
     <div id="loading-overlay" class="loading-overlay">
         <div class="loading-content">
             <i class="fas fa-spinner fa-spin fa-3x"></i>
@@ -1010,5 +996,1767 @@
             }
         });
     </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Présences — ZKTeco</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+/* ═══════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════ */
+:root {
+    --white:       #ffffff;
+    --gray-50:     #f9fafb;
+    --gray-100:    #f3f4f6;
+    --gray-200:    #e5e7eb;
+    --gray-300:    #d1d5db;
+    --gray-400:    #9ca3af;
+    --gray-500:    #6b7280;
+    --gray-600:    #4b5563;
+    --gray-700:    #374151;
+    --gray-800:    #1f2937;
+    --gray-900:    #111827;
+
+    --blue-50:     #eff6ff;
+    --blue-100:    #dbeafe;
+    --blue-500:    #3b82f6;
+    --blue-600:    #2563eb;
+    --blue-700:    #1d4ed8;
+
+    --green-50:    #f0fdf4;
+    --green-100:   #dcfce7;
+    --green-600:   #16a34a;
+    --green-700:   #15803d;
+
+    --amber-50:    #fffbeb;
+    --amber-100:   #fef3c7;
+    --amber-600:   #d97706;
+    --amber-700:   #b45309;
+
+    --red-50:      #fef2f2;
+    --red-100:     #fee2e2;
+    --red-600:     #dc2626;
+    --red-700:     #b91c1c;
+
+    --purple-50:   #faf5ff;
+    --purple-100:  #ede9fe;
+    --purple-600:  #7c3aed;
+
+    --font:        'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono:        'Geist Mono', 'Fira Code', monospace;
+
+    --sidebar-w:   232px;
+    --topbar-h:    56px;
+    --radius:      6px;
+    --radius-md:   8px;
+    --radius-lg:   12px;
+
+    --shadow-xs:   0 1px 2px rgba(0,0,0,0.05);
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:   0 4px 6px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.04);
+    --shadow-lg:   0 10px 15px rgba(0,0,0,0.06), 0 4px 6px rgba(0,0,0,0.04);
+
+    /* legacy compat for style.css + app.js */
+    --primary-color:   var(--blue-600);
+    --primary-dark:    var(--blue-700);
+    --primary-light:   var(--blue-500);
+    --success-color:   var(--green-600);
+    --success-dark:    var(--green-700);
+    --warning-color:   var(--amber-600);
+    --warning-dark:    var(--amber-700);
+    --danger-color:    var(--red-600);
+    --danger-dark:     var(--red-700);
+    --info-color:      var(--blue-500);
+    --info-dark:       var(--blue-700);
+    --dark-color:      var(--gray-800);
+    --gray-color:      var(--gray-500);
+    --gray-light:      var(--gray-400);
+    --gray-lighter:    var(--gray-300);
+    --bg-primary:      var(--white);
+    --bg-secondary:    var(--gray-50);
+    --bg-tertiary:     var(--gray-100);
+    --border-color:    var(--gray-200);
+    --border-dark:     var(--gray-300);
+    --font-family:     var(--font);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: var(--font);
+    background: var(--gray-100);
+    color: var(--gray-800);
+    font-size: 13.5px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════════ */
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════
+   SIDEBAR
+═══════════════════════════════════════════════ */
+.sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--white);
+    border-right: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 50;
+    overflow-y: auto;
+}
+
+.sb-brand {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sb-brand-icon {
+    width: 32px; height: 32px;
+    background: var(--blue-600);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.sb-brand-icon i { color: #fff; font-size: 14px; }
+
+.sb-brand-name  { font-size: 13.5px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.01em; }
+.sb-brand-sub   { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+.sb-section {
+    padding: 16px 16px 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gray-400);
+}
+
+.sb-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 1px 8px;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--gray-600);
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: calc(100% - 16px);
+    text-align: left;
+    transition: background 0.12s, color 0.12s;
+    font-family: var(--font);
+}
+.sb-item i { width: 15px; font-size: 12px; text-align: center; flex-shrink: 0; }
+.sb-item:hover  { background: var(--gray-100); color: var(--gray-900); }
+.sb-item.active { background: var(--blue-50); color: var(--blue-600); font-weight: 500; }
+.sb-item.active i { color: var(--blue-600); }
+
+.sb-badge {
+    margin-left: auto;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--mono);
+    padding: 1px 6px;
+    border-radius: 20px;
+    background: var(--red-100);
+    color: var(--red-600);
+}
+
+.sb-footer {
+    margin-top: auto;
+    padding: 12px 14px;
+    border-top: 1px solid var(--gray-100);
+}
+
+.sb-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 6px;
+    border-radius: var(--radius);
+    font-size: 11.5px;
+    color: var(--gray-500);
+    margin-bottom: 2px;
+}
+.sb-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--gray-300);
+    flex-shrink: 0;
+}
+.sb-dot.online  { background: var(--green-600); }
+.sb-dot.offline { background: var(--red-600); }
+.sb-dot.warn    { background: var(--amber-600); }
+
+/* ═══════════════════════════════════════════════
+   MAIN AREA
+═══════════════════════════════════════════════ */
+.main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════ */
+.topbar {
+    height: var(--topbar-h);
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.topbar-title   { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+.topbar-spacer  { flex: 1; }
+
+.topbar-clock {
+    text-align: right;
+    line-height: 1.35;
+}
+.clock-time { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--gray-800); }
+.clock-date { font-size: 11px; color: var(--gray-400); margin-top: 1px; }
+
+/* ═══════════════════════════════════════════════
+   CONTENT
+═══════════════════════════════════════════════ */
+.content {
+    padding: 24px;
+    flex: 1;
+}
+
+/* ═══════════════════════════════════════════════
+   SECTION HEADERS
+═══════════════════════════════════════════════ */
+.sec-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 12px;
+}
+.sec-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.sec-title i { color: var(--blue-500); font-size: 12px; }
+.sec-meta  { font-size: 11.5px; color: var(--gray-400); }
+.sec-divider { height: 1px; background: var(--gray-200); margin: 28px 0 24px; }
+
+/* ═══════════════════════════════════════════════
+   KPI CARDS
+═══════════════════════════════════════════════ */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); border-color: var(--gray-300); }
+
+.kpi-stripe {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+.stripe-blue   { background: var(--blue-500); }
+.stripe-green  { background: var(--green-600); }
+.stripe-red    { background: var(--red-600); }
+.stripe-amber  { background: var(--amber-600); }
+.stripe-purple { background: var(--purple-600); }
+
+.kpi-label   { font-size: 11px; font-weight: 500; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; margin-top: 4px; }
+.kpi-value   { font-size: 26px; font-weight: 600; color: var(--gray-900); letter-spacing: -0.03em; line-height: 1; font-family: var(--mono); }
+.kpi-sub     { font-size: 11.5px; color: var(--gray-400); margin-top: 7px; }
+.kpi-icon    { position: absolute; right: 16px; top: 16px; font-size: 20px; color: var(--gray-200); }
+
+/* ═══════════════════════════════════════════════
+   PANEL (white card)
+═══════════════════════════════════════════════ */
+.panel {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 0;
+}
+
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 12px;
+}
+.panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.panel-title i { color: var(--blue-500); font-size: 12px; }
+.panel-actions { display: flex; gap: 6px; align-items: center; }
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 13px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-700);
+    font-family: var(--font);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.btn:hover    { background: var(--gray-50); border-color: var(--gray-300); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+    background: var(--blue-600);
+    border-color: var(--blue-600);
+    color: #fff;
+}
+.btn-primary:hover { background: var(--blue-700); border-color: var(--blue-700); }
+
+.btn-ghost {
+    border-color: transparent;
+    background: transparent;
+    color: var(--gray-500);
+}
+.btn-ghost:hover { background: var(--gray-100); color: var(--gray-700); border-color: transparent; }
+
+/* legacy compat */
+.btn-secondary { background: var(--gray-50); color: var(--gray-700); border-color: var(--gray-200); }
+.btn-secondary:hover { background: var(--gray-100); }
+.btn-tertiary  { background: transparent; color: var(--gray-500); border-color: var(--gray-200); }
+.btn-tertiary:hover { background: var(--gray-50); }
+.btn-help      { background: transparent; color: var(--blue-500); border-color: var(--blue-200); }
+.btn-help:hover { background: var(--blue-50); }
+.btn-small     { padding: 4px 9px; font-size: 11.5px; }
+
+/* ═══════════════════════════════════════════════
+   FILTER STRIP
+═══════════════════════════════════════════════ */
+.filter-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    flex-wrap: wrap;
+}
+
+.f-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-400);
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* input / select shared */
+.finput,
+.filter-input {
+    height: 30px;
+    padding: 0 9px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--white);
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: var(--gray-800);
+    outline: none;
+    transition: border-color 0.12s, box-shadow 0.12s;
+}
+.finput:focus,
+.filter-input:focus {
+    border-color: var(--blue-500);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.finput option, .filter-input option { background: var(--white); }
+.finput::placeholder, .filter-input::placeholder { color: var(--gray-400); }
+.filter-input.small { height: 26px; font-size: 11.5px; }
+
+.f-sep { width: 1px; height: 18px; background: var(--gray-200); margin: 0 2px; }
+
+/* ═══════════════════════════════════════════════
+   DATA TABLE
+═══════════════════════════════════════════════ */
+.table-wrap { overflow-x: auto; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
+    font-size: 13px;
+}
+
+thead {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 10;
+}
+
+th {
+    padding: 9px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
+}
+
+td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--gray-100);
+    vertical-align: middle;
+    font-size: 13px;
+    color: var(--gray-700);
+}
+
+tbody tr { transition: background 0.08s; cursor: pointer; }
+tbody tr:hover { background: var(--gray-50); }
+tbody tr:last-child td { border-bottom: none; }
+
+.cell-name    { font-weight: 500; color: var(--gray-900); }
+.cell-id      { font-size: 11px; color: var(--gray-400); font-family: var(--mono); margin-top: 2px; }
+.cell-date    { font-weight: 500; color: var(--gray-800); }
+.cell-dayname { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+/* Time chips */
+.tc {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+}
+.tc-arrival   { background: var(--green-50);  color: var(--green-700);  border: 1px solid #bbf7d0; }
+.tc-departure { background: var(--red-50);    color: var(--red-700);    border: 1px solid #fecaca; }
+.tc-pending   { background: var(--amber-50);  color: var(--amber-700);  border: 1px solid #fde68a; }
+.tc-none      { color: var(--gray-400); font-style: italic; font-size: 12px; }
+
+/* Hours */
+.hours-val {
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 13px;
+}
+.h-good { color: var(--green-600); }
+.h-ok   { color: var(--amber-600); }
+.h-low  { color: var(--red-600); }
+.h-none { color: var(--gray-400); }
+
+/* Punch entries */
+.punch-list { display: flex; flex-wrap: wrap; gap: 4px; max-width: 180px; }
+.punch-item {
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-family: var(--mono);
+    font-weight: 500;
+}
+.punch-in  { background: var(--green-50); color: var(--green-700); border: 1px solid #bbf7d0; }
+.punch-out { background: var(--red-50);   color: var(--red-700);   border: 1px solid #fecaca; }
+
+/* Today badge */
+.today-badge {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 1px 6px;
+    background: var(--blue-50);
+    color: var(--blue-600);
+    border: 1px solid var(--blue-100);
+    border-radius: 4px;
+    font-size: 10.5px;
+    font-weight: 600;
+}
+
+/* ═══════════════════════════════════════════════
+   STATUS BADGES (legacy class names preserved)
+═══════════════════════════════════════════════ */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.status-present    { background: var(--green-50);  color: var(--green-700);  border: 1px solid #bbf7d0; }
+.status-late       { background: var(--amber-50);  color: var(--amber-700);  border: 1px solid #fde68a; }
+.status-absent     { background: var(--red-50);    color: var(--red-700);    border: 1px solid #fecaca; }
+.status-inprogress { background: var(--blue-50);   color: var(--blue-600);   border: 1px solid var(--blue-100); }
+.status-warning    { background: var(--amber-50);  color: var(--amber-700);  border: 1px solid #fde68a; }
+.status-connected    { color: var(--green-600); font-size: 12px; }
+.status-disconnected { color: var(--red-600);   font-size: 12px; }
+
+/* ═══════════════════════════════════════════════
+   PAGINATION
+═══════════════════════════════════════════════ */
+.pagination, .pag-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border-top: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    font-size: 12px;
+}
+.pag-info { color: var(--gray-500); flex: 1; }
+
+.pagination-btn, .pag-btn {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--white);
+    color: var(--gray-600);
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.12s;
+}
+.pagination-btn:hover:not(:disabled),
+.pag-btn:hover:not(:disabled) { background: var(--gray-100); border-color: var(--gray-300); }
+.pagination-btn:disabled,
+.pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.page-number, .pag-pg {
+    min-width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    background: var(--white);
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--gray-600);
+    transition: all 0.12s;
+}
+.page-number:hover { background: var(--gray-100); }
+.page-number.active, .pag-pg.active {
+    background: var(--blue-600);
+    border-color: var(--blue-600);
+    color: #fff;
+    font-weight: 600;
+}
+.page-numbers { display: flex; gap: 3px; }
+
+/* ═══════════════════════════════════════════════
+   STATS SECTION (togglable)
+═══════════════════════════════════════════════ */
+.stats-section {
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-100);
+    padding: 14px 18px;
+}
+.stats-container h3 { font-size: 13px; font-weight: 600; color: var(--gray-800); margin-bottom: 12px; display:flex;align-items:center;gap:6px; }
+.stats-container h3 i { color: var(--blue-500); }
+#stats-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap:10px; }
+.stat-item { background: var(--white); border:1px solid var(--gray-200); border-radius:var(--radius); padding:12px 14px; }
+.stat-value { font-size:20px; font-weight:600; font-family:var(--mono); color:var(--gray-900); }
+.stat-label { font-size:11px; color:var(--gray-500); margin-top:4px; }
+
+/* ═══════════════════════════════════════════════
+   REPORT PANEL
+═══════════════════════════════════════════════ */
+.report-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--gray-200);
+}
+.rtab {
+    padding: 11px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-500);
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.12s, border-color 0.12s;
+    display: flex; align-items: center; gap: 7px;
+}
+.rtab:hover  { color: var(--gray-800); }
+.rtab.active { color: var(--blue-600); border-bottom-color: var(--blue-600); }
+
+.date-range-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    flex-wrap: wrap;
+}
+
+.range-chip {
+    padding: 4px 11px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-600);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.12s;
+}
+.range-chip:hover  { border-color: var(--blue-400); color: var(--blue-600); background: var(--blue-50); }
+.range-chip.active { background: var(--blue-50); border-color: var(--blue-500); color: var(--blue-600); font-weight: 600; }
+
+.report-kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--gray-100);
+}
+.rkpi {
+    padding: 16px 20px;
+    border-right: 1px solid var(--gray-100);
+    background: var(--gray-50);
+}
+.rkpi:last-child { border-right: none; }
+.rkpi-val  { font-size: 22px; font-weight: 600; font-family: var(--mono); color: var(--gray-900); letter-spacing: -0.02em; }
+.rkpi-lbl  { font-size: 11px; color: var(--gray-500); margin-top: 5px; }
+.rkpi-blue   .rkpi-val { color: var(--blue-600); }
+.rkpi-green  .rkpi-val { color: var(--green-600); }
+.rkpi-amber  .rkpi-val { color: var(--amber-600); }
+.rkpi-red    .rkpi-val { color: var(--red-600); }
+
+/* Weekly table cells */
+.day-th   { text-align: center; min-width: 96px; }
+.day-cell { text-align: center; font-size: 12px; padding: 8px 6px !important; }
+.dc-present    { color: var(--green-600); font-weight: 500; }
+.dc-late       { color: var(--amber-600); font-weight: 500; }
+.dc-conge      { color: var(--blue-600);  font-weight: 500; }
+.dc-mission    { color: var(--purple-600);font-weight: 500; }
+.dc-incomplete { color: var(--red-600); }
+.dc-absent     { color: var(--gray-400); font-style: italic; }
+.total-cell    { text-align: center; font-weight: 700; font-size: 13px; color: var(--blue-600); font-family: var(--mono); }
+
+/* Late report */
+.late-group {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.late-group-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+.late-group-date  { font-weight: 600; font-size: 12.5px; color: var(--gray-800); flex: 1; }
+.late-group-count {
+    font-size: 11px;
+    background: var(--red-50);
+    color: var(--red-600);
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+    padding: 2px 9px;
+    font-weight: 600;
+}
+
+.ranking-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 8px;
+}
+.rank-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+}
+.rank-num  { font-size: 18px; font-weight: 700; color: var(--gray-300); min-width: 26px; font-family: var(--mono); }
+.rank-num.hot { color: var(--red-600); }
+.rank-name { font-weight: 500; font-size: 12.5px; color: var(--gray-900); }
+.rank-sub  { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+.rank-count { margin-left: auto; font-size: 20px; font-weight: 700; color: var(--amber-600); font-family: var(--mono); }
+
+/* Legend */
+.legend-bar {
+    padding: 10px 18px;
+    font-size: 11.5px;
+    color: var(--gray-500);
+    border-top: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+}
+.leg { display: flex; align-items: center; gap: 5px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* Report empty state */
+.report-state {
+    padding: 52px 20px;
+    text-align: center;
+    color: var(--gray-400);
+}
+.report-state .rs-icon { font-size: 32px; margin-bottom: 12px; }
+.report-state p { font-size: 13px; }
+.report-state strong { color: var(--gray-700); }
+
+/* ═══════════════════════════════════════════════
+   MODALS
+═══════════════════════════════════════════════ */
+.modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+.modal-content {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    max-width: 700px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.debug-content, .help-content { max-width: 900px; }
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    gap: 12px;
+    background: var(--gray-50);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.modal-header h2 { font-size: 14px; font-weight: 600; flex: 1; color: var(--gray-900); display:flex;align-items:center;gap:8px; }
+
+.close-modal {
+    width: 28px; height: 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
+    background: var(--white);
+    color: var(--gray-500);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    transition: all 0.12s;
+    font-family: var(--font);
+}
+.close-modal:hover { background: var(--red-50); color: var(--red-600); border-color: #fecaca; }
+
+.modal-body   { padding: 20px; }
+.modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--gray-100);
+    display: flex; gap: 8px; justify-content: flex-end;
+    background: var(--gray-50);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* Detail cards inside modal */
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.detail-card {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 13px 16px;
+}
+.detail-label { font-size: 10.5px; font-weight: 600; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 5px; }
+.detail-value { font-size: 18px; font-weight: 600; font-family: var(--mono); color: var(--gray-900); }
+
+/* App.js detail section labels */
+.employee-info-section h3,
+.attendance-section h3,
+.entries-section h3 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin: 16px 0 10px;
+    display: flex; align-items: center; gap: 7px;
+}
+.employee-info-section h3 i,
+.attendance-section h3 i,
+.entries-section h3 i { color: var(--blue-500); }
+.employee-info-section:first-child h3 { margin-top: 0; }
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.info-item {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+}
+.info-label { font-size: 10.5px; color: var(--gray-400); margin-bottom: 3px; font-weight: 500; }
+.info-value { font-size: 13px; font-weight: 600; color: var(--gray-900); }
+
+.attendance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.attendance-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+}
+.card-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #fff; flex-shrink: 0;
+}
+.arrival-card   .card-icon { background: var(--green-600); }
+.departure-card .card-icon { background: var(--red-600); }
+.hours-card     .card-icon { background: var(--blue-600); }
+.status-card    .card-icon { background: var(--purple-600); }
+.card-content .card-label  { font-size: 10.5px; color: var(--gray-400); margin-bottom: 3px; font-weight: 500; }
+.card-content .card-value  { font-size: 16px; font-weight: 600; color: var(--gray-900); font-family: var(--mono); }
+
+.entries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px;
+}
+.entry-card { padding: 10px; border-radius: var(--radius); text-align: center; border: 1px solid; }
+.entry-arrival  { background: var(--green-50);  border-color: #bbf7d0; }
+.entry-departure{ background: var(--red-50);    border-color: #fecaca; }
+.entry-time { font-size: 14px; font-weight: 600; font-family: var(--mono); color: var(--gray-900); }
+.entry-type { font-size: 11px; color: var(--gray-500); margin-top: 3px; }
+
+/* ═══════════════════════════════════════════════
+   DEBUG MODAL internals
+═══════════════════════════════════════════════ */
+.debug-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.debug-stat {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.debug-stat .stat-label { font-size: 12px; color: var(--gray-500); }
+.debug-stat .stat-value { font-size: 13px; font-weight: 600; color: var(--gray-900); font-family: var(--mono); }
+
+/* ═══════════════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════════════ */
+#notification-container {
+    position: fixed;
+    top: 16px; right: 16px;
+    z-index: 500;
+    display: flex; flex-direction: column; gap: 8px;
+    max-width: 340px;
+}
+.notification {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    animation: slideInRight 0.25s ease;
+    font-size: 12.5px;
+    color: var(--gray-700);
+}
+@keyframes slideInRight { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+.notification-success { border-left: 3px solid var(--green-600); }
+.notification-error   { border-left: 3px solid var(--red-600); }
+.notification-warning { border-left: 3px solid var(--amber-600); }
+.notification-info    { border-left: 3px solid var(--blue-500); }
+
+.notification-icon  { flex-shrink: 0; font-size: 14px; }
+.notification-success .notification-icon { color: var(--green-600); }
+.notification-error   .notification-icon { color: var(--red-600); }
+.notification-warning .notification-icon { color: var(--amber-600); }
+.notification-info    .notification-icon { color: var(--blue-500); }
+
+.notification-content { flex: 1; }
+.notification-message { color: var(--gray-700); font-size: 12.5px; }
+.notification-close {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-400); margin-left: auto; font-size: 12px;
+    padding: 2px 4px; border-radius: 4px; transition: color 0.12s;
+    flex-shrink: 0;
+}
+.notification-close:hover { color: var(--gray-700); }
+
+/* ═══════════════════════════════════════════════
+   LOADING OVERLAY
+═══════════════════════════════════════════════ */
+.loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,0.85);
+    z-index: 600;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(3px);
+}
+.loading-content {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 32px 40px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    max-width: 360px;
+}
+.loading-content i    { color: var(--blue-600); font-size: 28px; margin-bottom: 12px; display:block; }
+.loading-content h3   { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 6px; }
+.loading-content p    { font-size: 12.5px; color: var(--gray-500); }
+
+/* ═══════════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-300); }
+
+/* ═══════════════════════════════════════════════
+   INLINE TIME / HOURS DISPLAY (app.js injects these)
+═══════════════════════════════════════════════ */
+.time-display { font-family: var(--mono); font-weight: 600; font-size: 13px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+.arrival-time   { background: var(--green-50);  color: var(--green-700); }
+.departure-time { background: var(--red-50);    color: var(--red-700); }
+.empty-time     { color: var(--gray-400); font-style: italic; font-family: var(--font); font-size: 13px; }
+.pending-time   { color: var(--amber-600); }
+.hours-display  { font-family: var(--mono); font-weight: 700; font-size: 13px; display: inline-block; }
+
+.time-entry   { padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 500; font-family: var(--mono); }
+.arrival-entry  { background: var(--green-50); color: var(--green-700); border: 1px solid #bbf7d0; }
+.departure-entry{ background: var(--red-50);   color: var(--red-700);   border: 1px solid #fecaca; }
+.entries-container { display: flex; flex-wrap: wrap; gap: 3px; max-width: 180px; }
+
+.action-btn {
+    padding: 4px 8px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius);
+    cursor: pointer; color: var(--gray-600); font-size: 12px;
+    transition: all 0.12s;
+}
+.action-btn:hover { background: var(--gray-100); color: var(--gray-900); }
+
+.today-indicator {
+    background: var(--blue-600); color: #fff;
+    padding: 2px 8px; border-radius: 4px;
+    font-size: 11px; margin-left: 8px;
+}
+
+/* ═══════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════ */
+@media print {
+    .sidebar, .topbar, .filter-strip, .pagination, .pag-bar,
+    .btn, .modal, #notification-container, .loading-overlay { display: none !important; }
+    .main { margin-left: 0; }
+    .content { padding: 0; }
+    table { font-size: 11px; }
+    th, td { padding: 5px 8px; }
+}
+    </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+<!-- ═══════════ SIDEBAR ═══════════ -->
+<aside class="sidebar">
+    <div class="sb-brand">
+        <div class="sb-brand-icon"><i class="fas fa-fingerprint"></i></div>
+        <div>
+            <div class="sb-brand-name">ZKTeco</div>
+            <div class="sb-brand-sub">Gestion des Présences</div>
+        </div>
+    </div>
+
+    <div class="sb-section">Tableau de bord</div>
+    <button class="sb-item active" onclick="scrollTo('s-overview')">
+        <i class="fas fa-chart-line"></i> Vue d'ensemble
+    </button>
+    <button class="sb-item" onclick="scrollTo('s-pointages')">
+        <i class="fas fa-table-list"></i> Pointages
+    </button>
+    <button class="sb-item" onclick="scrollTo('s-reports')">
+        <i class="fas fa-chart-bar"></i> Rapports
+        <span class="sb-badge" id="nav-late-badge" style="display:none"></span>
+    </button>
+
+    <div class="sb-section">Actions</div>
+    <button class="sb-item" id="refresh-btn" onclick="attendanceSystem && attendanceSystem.manualRefresh()">
+        <i class="fas fa-rotate"></i> Synchroniser
+    </button>
+    <button class="sb-item" onclick="attendanceSystem && attendanceSystem.exportData()">
+        <i class="fas fa-file-arrow-down"></i> Exporter CSV
+    </button>
+    <button class="sb-item" onclick="attendanceSystem && attendanceSystem.showDebugInfo()">
+        <i class="fas fa-bug"></i> Diagnostic
+    </button>
+    <button class="sb-item" onclick="attendanceSystem && attendanceSystem.showHelp()">
+        <i class="fas fa-circle-question"></i> Aide
+    </button>
+
+    <div class="sb-footer">
+        <div class="sb-status">
+            <span class="sb-dot" id="dot-backend"></span>
+            <span id="txt-backend" style="font-size:11.5px">Backend…</span>
+        </div>
+        <div class="sb-status">
+            <span class="sb-dot" id="dot-device"></span>
+            <span id="txt-device" style="font-size:11.5px">Pointeuse…</span>
+        </div>
+        <div style="margin-top:8px;padding:0 6px;font-size:10.5px;color:var(--gray-400)">
+            v2.0 · Messai Majed · STS
+        </div>
+    </div>
+</aside>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<div class="main">
+
+    <!-- Topbar -->
+    <header class="topbar">
+        <div>
+            <div class="topbar-title">Tableau de bord des présences</div>
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="topbar-clock">
+            <div class="clock-time" id="current-time">—</div>
+            <div class="clock-date" id="current-date"></div>
+        </div>
+        <button class="btn btn-primary" style="margin-left:12px" onclick="attendanceSystem && attendanceSystem.manualRefresh()">
+            <i class="fas fa-rotate"></i> Rafraîchir
+        </button>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+
+        <!-- ── SECTION 1: KPIs ── -->
+        <section id="s-overview">
+            <div class="sec-header">
+                <div class="sec-title"><i class="fas fa-chart-line"></i> Vue d'ensemble</div>
+                <span class="sec-meta">Mise à jour : <span id="last-update">—</span></span>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-stripe stripe-blue"></div>
+                    <i class="fas fa-users kpi-icon"></i>
+                    <div class="kpi-label">Employés</div>
+                    <div class="kpi-value" id="total-users">—</div>
+                    <div class="kpi-sub" id="users-detail">Chargement…</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-stripe stripe-green"></div>
+                    <i class="fas fa-calendar-check kpi-icon"></i>
+                    <div class="kpi-label">Présents aujourd'hui</div>
+                    <div class="kpi-value" id="today-present">—</div>
+                    <div class="kpi-sub" id="today-sub">—</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-stripe stripe-red"></div>
+                    <i class="fas fa-user-xmark kpi-icon"></i>
+                    <div class="kpi-label">Absents aujourd'hui</div>
+                    <div class="kpi-value" id="today-absent">—</div>
+                    <div class="kpi-sub" id="absent-sub">—</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-stripe stripe-amber"></div>
+                    <i class="fas fa-database kpi-icon"></i>
+                    <div class="kpi-label">Total enregistrements</div>
+                    <div class="kpi-value" id="total-records">—</div>
+                    <div class="kpi-sub" id="records-detail">Base de données</div>
+                </div>
+            </div>
+
+            <!-- Legacy status (hidden, kept for app.js compat) -->
+            <div style="display:none">
+                <span id="connection-status"></span>
+                <span class="status-dot" id="connection-dot"></span>
+                <span id="data-status"></span>
+                <span id="api-status"></span>
+                <span id="total-days"></span>
+                <span id="total-logs"></span>
+                <span id="days-detail"></span>
+                <span id="logs-detail"></span>
+                <span id="backend-status" class="status-indicator offline">● Hors ligne</span>
+                <span id="device-status" class="status-indicator offline">● Déconnectée</span>
+            </div>
+        </section>
+
+        <div class="sec-divider"></div>
+
+        <!-- ── SECTION 2: Pointages ── -->
+        <section id="s-pointages">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title"><i class="fas fa-table-list"></i> Pointages</div>
+                    <div class="panel-actions">
+                        <button class="btn btn-ghost" id="toggle-stats" onclick="attendanceSystem && attendanceSystem.toggleStats()">
+                            <i class="fas fa-chart-bar"></i> Statistiques
+                        </button>
+                        <button class="btn btn-ghost" id="export-btn" onclick="attendanceSystem && attendanceSystem.exportData()">
+                            <i class="fas fa-file-arrow-down"></i> CSV
+                        </button>
+                        <button class="btn btn-ghost" id="debug-btn" onclick="attendanceSystem && attendanceSystem.showDebugInfo()">
+                            <i class="fas fa-bug"></i>
+                        </button>
+                        <button class="btn btn-ghost" id="help-btn" onclick="attendanceSystem && attendanceSystem.showHelp()">
+                            <i class="fas fa-circle-question"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats (togglable) -->
+                <div id="stats-section" class="stats-section" style="display:none">
+                    <div class="stats-container">
+                        <h3><i class="fas fa-chart-bar"></i> Statistiques filtrées</h3>
+                        <div id="stats-content"></div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filter-strip">
+                    <span class="f-label">Mode</span>
+                    <select id="view-mode" class="finput">
+                        <option value="all">Tous</option>
+                        <option value="by-date" selected>Par date</option>
+                        <option value="by-employee">Par employé</option>
+                        <option value="today">Aujourd'hui</option>
+                    </select>
+                    <div class="f-sep"></div>
+                    <span class="f-label">Date</span>
+                    <input type="date" id="date-filter" class="finput">
+                    <div class="f-sep"></div>
+                    <span class="f-label">Employé</span>
+                    <select id="employee-filter" class="finput" style="max-width:190px">
+                        <option value="">Tous</option>
+                    </select>
+                    <div class="f-sep"></div>
+                    <input type="text" id="search-filter" placeholder="Rechercher…" class="finput" style="flex:1;min-width:140px;max-width:200px">
+                    <div class="f-sep"></div>
+                    <span class="f-label">Trier</span>
+                    <select id="sort-filter" class="finput">
+                        <option value="date-desc">Date ↓</option>
+                        <option value="date-asc">Date ↑</option>
+                        <option value="name-asc">Nom A→Z</option>
+                        <option value="name-desc">Nom Z→A</option>
+                        <option value="hours-desc">Heures ↓</option>
+                        <option value="status">Statut</option>
+                    </select>
+                    <div class="f-sep"></div>
+                    <select id="page-size" class="finput" style="width:60px">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="table-wrap">
+                    <table id="attendance-table">
+                        <thead>
+                            <tr>
+                                <th>Matricule</th>
+                                <th>Nom & Prénom</th>
+                                <th>Date</th>
+                                <th>Arrivée</th>
+                                <th>Départ</th>
+                                <th>Heures</th>
+                                <th>Pointages</th>
+                                <th>Statut</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <tr><td colspan="9" style="text-align:center;padding:48px;color:var(--gray-400)">
+                                <i class="fas fa-spinner fa-spin" style="margin-right:8px;color:var(--blue-500)"></i>Chargement…
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination">
+                    <div class="pagination-info">
+                        <span id="page-info">Page 1 sur 1</span>
+                        <span class="results-info" id="results-info" style="font-size:11.5px;color:var(--gray-400);margin-left:8px"></span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button id="first-page" class="pagination-btn" disabled><i class="fas fa-angles-left"></i></button>
+                        <button id="prev-page"  class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
+                        <div id="page-numbers" class="page-numbers"></div>
+                        <button id="next-page"  class="pagination-btn" disabled><i class="fas fa-chevron-right"></i></button>
+                        <button id="last-page"  class="pagination-btn" disabled><i class="fas fa-angles-right"></i></button>
+                    </div>
+                    <div class="pagination-size" style="display:flex;align-items:center;gap:6px">
+                        <span style="font-size:11.5px;color:var(--gray-400)">Lignes :</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="sec-divider"></div>
+
+        <!-- ── SECTION 3: Reports ── -->
+        <section id="s-reports">
+            <div class="sec-header">
+                <div class="sec-title"><i class="fas fa-chart-bar"></i> Rapports analytiques</div>
+            </div>
+
+            <div class="panel">
+                <!-- Tabs -->
+                <div class="report-tabs">
+                    <button class="rtab active" onclick="switchReportTab('weekly', this)">
+                        <i class="fas fa-calendar-week"></i> Résumé hebdomadaire
+                    </button>
+                    <button class="rtab" onclick="switchReportTab('late', this)">
+                        <i class="fas fa-triangle-exclamation"></i> Retardataires
+                    </button>
+                </div>
+
+                <!-- Date range -->
+                <div class="date-range-bar">
+                    <span class="f-label">Du</span>
+                    <input type="date" id="report-start-date" class="finput">
+                    <span class="f-label">au</span>
+                    <input type="date" id="report-end-date" class="finput">
+                    <div class="f-sep" style="margin:0 4px"></div>
+                    <button class="range-chip" onclick="setReportRange('week', this)">Cette semaine</button>
+                    <button class="range-chip" onclick="setReportRange('lastweek', this)">Sem. passée</button>
+                    <button class="range-chip" onclick="setReportRange('month', this)">Ce mois</button>
+                    <button class="range-chip" onclick="setReportRange('lastmonth', this)">Mois passé</button>
+                    <div style="margin-left:auto;display:flex;gap:8px">
+                        <button class="btn btn-primary" id="report-run-btn" onclick="runEmbeddedReport()">
+                            <i class="fas fa-play"></i> Générer
+                        </button>
+                        <button class="btn" id="report-export-btn" onclick="exportReportCSV()" style="display:none">
+                            <i class="fas fa-file-arrow-down"></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report KPIs -->
+                <div id="report-kpis" class="report-kpi-row" style="display:none"></div>
+
+                <!-- Report body -->
+                <div id="report-content">
+                    <div class="report-state">
+                        <div class="rs-icon"><i class="fas fa-chart-bar" style="color:var(--gray-300)"></i></div>
+                        <p>Sélectionnez une période et cliquez sur <strong>Générer</strong></p>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="legend-bar" id="report-legend" style="display:none">
+                    <span style="font-size:11px;font-weight:600;color:var(--gray-500)">Légende :</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--green-600)"></span>Présent</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--amber-600)"></span>Retard (après 08h30)</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--blue-600)"></span>Congé</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--purple-600)"></span>Mission</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--red-600)"></span>Incomplet</span>
+                    <span class="leg"><span class="leg-dot" style="background:var(--gray-300)"></span>Absent</span>
+                    <span style="margin-left:auto;color:var(--gray-400);font-size:10.5px">Heures nettes après pause déjeuner + corrections RH</span>
+                </div>
+            </div>
+        </section>
+
+        <div style="height:48px"></div>
+    </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app-shell -->
+
+<!-- ── Details Modal ── -->
+<div id="details-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title"><i class="fas fa-clock" style="color:var(--blue-500)"></i> Détails de présence</h2>
+            <button class="close-modal">×</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+        <div class="modal-footer">
+            <button id="close-modal-btn" class="btn">Fermer</button>
+            <button id="export-details-btn" class="btn btn-primary"><i class="fas fa-download"></i> Exporter</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Debug Modal ── -->
+<div id="debug-modal" class="modal debug-modal">
+    <div class="modal-content debug-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-bug" style="color:var(--blue-500)"></i> Diagnostic</h2>
+            <button class="close-modal">×</button>
+        </div>
+        <div class="modal-body" id="debug-body"></div>
+    </div>
+</div>
+
+<!-- ── Help Modal ── -->
+<div id="help-modal" class="modal help-modal">
+    <div class="modal-content help-content">
+        <div class="modal-header">
+            <h2><i class="fas fa-circle-question" style="color:var(--blue-500)"></i> Aide</h2>
+            <button class="close-modal">×</button>
+        </div>
+        <div class="modal-body" id="help-body"></div>
+    </div>
+</div>
+
+<div id="notification-container"></div>
+
+<div id="loading-overlay" class="loading-overlay">
+    <div class="loading-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <h3>Chargement en cours</h3>
+        <p id="loading-message">Veuillez patienter…</p>
+    </div>
+</div>
+
+<script src="app.js"></script>
+
+<script>
+/* ════════════════════════════════════════════════════
+   UNIFIED DASHBOARD BRIDGE
+════════════════════════════════════════════════════ */
+const REPORT_BASE_URL = 'https://pointeuse-back.azurewebsites.net/api';
+
+let currentReportTab = 'weekly';
+let lastReportData   = null;
+let lastLateData     = null;
+
+/* ── Scroll to section ── */
+function scrollTo(id) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.sb-item').forEach(b => b.classList.remove('active'));
+    const map = { 's-overview': 0, 's-pointages': 1, 's-reports': 2 };
+    document.querySelectorAll('.sb-item')[map[id]]?.classList.add('active');
+}
+
+/* ── Clock ── */
+(function tick() {
+    const update = () => {
+        const now = new Date();
+        const te = document.getElementById('current-time');
+        const de = document.getElementById('current-date');
+        if (te) te.textContent = now.toLocaleTimeString('fr-FR');
+        if (de) de.textContent = now.toLocaleDateString('fr-FR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+    };
+    update(); setInterval(update, 1000);
+})();
+
+/* ── Patch updateSummary to feed the new KPI cards ── */
+document.addEventListener('DOMContentLoaded', () => {
+    initReportDates();
+
+    const origSummary = AttendanceSystem.prototype.updateSummary;
+    AttendanceSystem.prototype.updateSummary = function(summary) {
+        origSummary.call(this, summary);
+        const s = summary;
+        set('total-users',    s.totalEmployees ?? '—');
+        set('total-records',  s.totalRecords   ?? '—');
+        set('today-present',  s.today?.present ?? '—');
+        set('today-absent',   s.today?.absent  ?? '—');
+        set('today-sub',      `Sur ${s.totalEmployees ?? '—'} employés`);
+        set('absent-sub',     s.today?.date    ?? '—');
+        set('last-update',    new Date().toLocaleString('fr-FR'));
+        syncDots(s);
+    };
+
+    // also patch loadAllData to sync dots after load
+    const origLoad = AttendanceSystem.prototype.loadAllData;
+    AttendanceSystem.prototype.loadAllData = async function() {
+        await origLoad.call(this);
+        syncDotsFromDOM();
+    };
+});
+
+function set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+function syncDots(s) {
+    syncDotsFromDOM();
+}
+
+function syncDotsFromDOM() {
+    const bEl = document.getElementById('backend-status');
+    const dEl = document.getElementById('device-status');
+    const dB  = document.getElementById('dot-backend');
+    const dD  = document.getElementById('dot-device');
+    const tB  = document.getElementById('txt-backend');
+    const tD  = document.getElementById('txt-device');
+    if (bEl && dB) {
+        const on = bEl.classList.contains('online');
+        dB.className = 'sb-dot ' + (on ? 'online' : 'offline');
+        if (tB) tB.textContent = on ? 'Backend en ligne' : 'Backend hors ligne';
+    }
+    if (dEl && dD) {
+        const on = dEl.classList.contains('online');
+        dD.className = 'sb-dot ' + (on ? 'online' : 'warn');
+        if (tD) tD.textContent = dEl.textContent.replace('●','').trim() || 'Pointeuse…';
+    }
+}
+
+/* ════════════════════════════════════════════════════
+   REPORT ENGINE — same API endpoints as before
+════════════════════════════════════════════════════ */
+
+function switchReportTab(tab, el) {
+    currentReportTab = tab;
+    document.querySelectorAll('.rtab').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    resetReport();
+    const s = document.getElementById('report-start-date').value;
+    const e = document.getElementById('report-end-date').value;
+    if (s && e) runEmbeddedReport();
+}
+
+function resetReport() {
+    document.getElementById('report-kpis').style.display = 'none';
+    document.getElementById('report-export-btn').style.display = 'none';
+    document.getElementById('report-legend').style.display = 'none';
+    document.getElementById('report-content').innerHTML = `
+        <div class="report-state">
+            <div class="rs-icon"><i class="fas fa-chart-bar" style="color:var(--gray-300)"></i></div>
+            <p>Sélectionnez une période et cliquez sur <strong>Générer</strong></p>
+        </div>`;
+}
+
+function setReportRange(type, btn) {
+    const today = new Date();
+    const pad = d => d.toISOString().split('T')[0];
+    let start, end;
+    if (type === 'week') {
+        const day = today.getDay(), mon = new Date(today);
+        mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+        start = pad(mon); end = pad(today);
+    } else if (type === 'lastweek') {
+        const day = today.getDay(), mon = new Date(today);
+        mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1) - 7);
+        const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+        start = pad(mon); end = pad(fri);
+    } else if (type === 'month') {
+        start = pad(new Date(today.getFullYear(), today.getMonth(), 1)); end = pad(today);
+    } else {
+        start = pad(new Date(today.getFullYear(), today.getMonth() - 1, 1));
+        end   = pad(new Date(today.getFullYear(), today.getMonth(), 0));
+    }
+    document.getElementById('report-start-date').value = start;
+    document.getElementById('report-end-date').value   = end;
+    document.querySelectorAll('.range-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    runEmbeddedReport();
+}
+
+function initReportDates() {
+    const today = new Date(), day = today.getDay(), mon = new Date(today);
+    mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
+    document.getElementById('report-start-date').value = mon.toISOString().split('T')[0];
+    document.getElementById('report-end-date').value   = today.toISOString().split('T')[0];
+}
+
+async function runEmbeddedReport() {
+    const start = document.getElementById('report-start-date').value;
+    const end   = document.getElementById('report-end-date').value;
+    if (!start || !end) return;
+
+    const btn = document.getElementById('report-run-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Chargement…';
+
+    document.getElementById('report-content').innerHTML = `
+        <div class="report-state">
+            <div class="rs-icon"><i class="fas fa-spinner fa-spin" style="color:var(--blue-500)"></i></div>
+            <p>Génération du rapport…</p>
+        </div>`;
+    document.getElementById('report-kpis').style.display = 'none';
+    document.getElementById('report-export-btn').style.display = 'none';
+    document.getElementById('report-legend').style.display = 'none';
+
+    try {
+        if (currentReportTab === 'weekly') await runWeeklyReport(start, end);
+        else await runLateReport(start, end);
+    } catch(e) {
+        document.getElementById('report-content').innerHTML = `
+            <div class="report-state">
+                <div class="rs-icon"><i class="fas fa-triangle-exclamation" style="color:var(--red-600)"></i></div>
+                <p style="color:var(--red-600)">${e.message}</p>
+            </div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-play"></i> Générer';
+    }
+}
+
+async function runWeeklyReport(start, end) {
+    const res  = await fetch(`${REPORT_BASE_URL}/report?start=${start}&end=${end}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    lastReportData = data;
+    const s = data.summary;
+
+    document.getElementById('report-kpis').innerHTML = `
+        <div class="rkpi"><div class="rkpi-val">${data.weekDays.length}</div><div class="rkpi-lbl">Jours ouvrés · ${fd(start)} → ${fd(end)}</div></div>
+        <div class="rkpi rkpi-green"><div class="rkpi-val">${s.totalEmployees}</div><div class="rkpi-lbl">Employés · ${s.employeesWithData} avec données</div></div>
+        <div class="rkpi rkpi-blue"><div class="rkpi-val">${s.totalWorkedHours}</div><div class="rkpi-lbl">Heures travaillées</div></div>
+        <div class="rkpi rkpi-amber"><div class="rkpi-val">${s.totalLateCount}</div><div class="rkpi-lbl">Retards non justifiés</div></div>`;
+    document.getElementById('report-kpis').style.display = 'grid';
+    document.getElementById('report-export-btn').style.display = 'inline-flex';
+    document.getElementById('report-legend').style.display = 'flex';
+
+    if (!data.employees.length) {
+        document.getElementById('report-content').innerHTML = `
+            <div class="report-state"><div class="rs-icon"><i class="fas fa-inbox" style="color:var(--gray-300)"></i></div><p>Aucune donnée pour cette période</p></div>`;
+        return;
+    }
+
+    const dayHdrs = data.weekDays.map(d => {
+        const dt = new Date(d + 'T00:00:00');
+        return `<th class="day-th">${dt.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'})}</th>`;
+    }).join('');
+
+    const rows = data.employees.map(emp => {
+        const cells = emp.days.map(day => {
+            const cls = {present:'dc-present',late:'dc-late',conge:'dc-conge',conge_demi:'dc-conge',mission:'dc-mission',incomplete:'dc-incomplete'}[day.status] || 'dc-absent';
+            return `<td class="day-cell ${cls}">${day.displayText}</td>`;
+        }).join('');
+        const lb = emp.lateCount > 0
+            ? `<span class="status-badge status-late">${emp.lateCount}×</span>`
+            : `<span style="color:var(--gray-300)">—</span>`;
+        return `<tr>
+            <td><div class="cell-name">${emp.name}</div><div class="cell-id">${emp.cardNo||emp.matricule||'—'}</div></td>
+            ${cells}
+            <td class="total-cell">${emp.totalHours}</td>
+            <td style="text-align:center">${lb}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('report-content').innerHTML = `
+        <div class="table-wrap">
+            <table>
+                <thead><tr><th>Employé</th>${dayHdrs}<th style="text-align:center">Total</th><th style="text-align:center">Retards</th></tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+}
+
+async function runLateReport(start, end) {
+    const res  = await fetch(`${REPORT_BASE_URL}/report/late?start=${start}&end=${end}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    lastLateData = data;
+    const s = data.summary;
+
+    const nb = document.getElementById('nav-late-badge');
+    if (nb) { nb.textContent = s.totalLate; nb.style.display = s.totalLate > 0 ? 'inline' : 'none'; }
+
+    document.getElementById('report-kpis').innerHTML = `
+        <div class="rkpi rkpi-red"><div class="rkpi-val">${s.totalLate}</div><div class="rkpi-lbl">Total retards non justifiés</div></div>
+        <div class="rkpi"><div class="rkpi-val">${s.uniqueEmployees}</div><div class="rkpi-lbl">Employés concernés</div></div>
+        <div class="rkpi"><div class="rkpi-val">${s.daysChecked}</div><div class="rkpi-lbl">Jours analysés · ${fd(start)} → ${fd(end)}</div></div>
+        <div class="rkpi rkpi-amber"><div class="rkpi-val">${fm(s.totalLateMinutes)}</div><div class="rkpi-lbl">Temps cumulé de retard</div></div>`;
+    document.getElementById('report-kpis').style.display = 'grid';
+    document.getElementById('report-export-btn').style.display = 'inline-flex';
+
+    if (!data.lateArrivals.length) {
+        document.getElementById('report-content').innerHTML = `
+            <div class="report-state">
+                <div class="rs-icon"><i class="fas fa-circle-check" style="color:var(--green-600)"></i></div>
+                <p style="color:var(--green-600);font-weight:600">Aucun retard non justifié sur cette période !</p>
+            </div>`;
+        return;
+    }
+
+    const rankCards = data.byEmployee.slice(0,8).map((emp,i) => `
+        <div class="rank-card">
+            <div class="rank-num ${i<3?'hot':''}">${i+1}</div>
+            <div style="flex:1"><div class="rank-name">${emp.name}</div><div class="rank-sub">${fm(emp.totalLateMinutes)} cumulés</div></div>
+            <div class="rank-count">${emp.count}×</div>
+        </div>`).join('');
+
+    const dateGroups = Object.entries(data.byDate)
+        .sort(([a],[b]) => a.localeCompare(b))
+        .map(([date, records]) => {
+            const dt  = new Date(date + 'T00:00:00');
+            const lbl = dt.toLocaleDateString('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+            const rows = records.map(r => `<tr>
+                <td><div class="cell-name">${r.name}</div></td>
+                <td><span class="tc tc-arrival">${r.arrival}</span></td>
+                <td>${r.departure?`<span class="tc tc-departure">${r.departure}</span>`:'<span class="tc-none">—</span>'}</td>
+                <td><span class="status-badge status-late"><i class="fas fa-clock" style="font-size:10px;margin-right:3px"></i>+${r.lateDisplay}</span></td>
+            </tr>`).join('');
+            return `
+                <div class="late-group">
+                    <div class="late-group-header">
+                        <i class="fas fa-calendar-day" style="color:var(--gray-400);font-size:12px"></i>
+                        <span class="late-group-date">${lbl}</span>
+                        <span class="late-group-count">${records.length} retard${records.length>1?'s':''}</span>
+                    </div>
+                    <div class="table-wrap"><table>
+                        <thead><tr><th>Employé</th><th>Arrivée</th><th>Départ</th><th>Retard</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table></div>
+                </div>`;
+        }).join('');
+
+    document.getElementById('report-content').innerHTML = `
+        <div style="padding:16px 18px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-400);margin-bottom:12px">
+                <i class="fas fa-trophy" style="color:var(--amber-600);margin-right:5px"></i>Classement
+            </div>
+            <div class="ranking-grid">${rankCards}</div>
+        </div>
+        <div style="padding:0 18px 16px">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--gray-400);margin-bottom:12px">
+                <i class="fas fa-calendar" style="margin-right:5px"></i>Détail par date
+            </div>
+            ${dateGroups}
+        </div>`;
+}
+
+/* ── CSV export ── */
+function exportReportCSV() {
+    if (currentReportTab === 'weekly' && lastReportData) {
+        const d = lastReportData;
+        const dayLabels = d.weekDays.map(date => new Date(date+'T00:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'}));
+        const hdr = ['Employé','Matricule',...dayLabels,'Total Heures','Nb Retards'];
+        const rows = d.employees.map(e => [e.name,e.cardNo||e.matricule||'',...e.days.map(day=>day.displayText.replace(/,/g,';')),e.totalHours,e.lateCount]);
+        dlCSV([hdr,...rows],`rapport_semaine_${d.start}_${d.end}.csv`);
+    } else if (currentReportTab === 'late' && lastLateData) {
+        const d = lastLateData;
+        const hdr = ['Date','Employé','Arrivée','Départ','Retard'];
+        const rows = d.lateArrivals.map(r => [r.date,r.name,r.arrival,r.departure||'',r.lateDisplay]);
+        dlCSV([hdr,...rows],`rapport_retards_${d.start}_${d.end}.csv`);
+    }
+}
+
+function dlCSV(rows, filename) {
+    const csv = rows.map(r=>r.map(v=>{const s=String(v??'');return s.includes(',')||s.includes('"')?`"${s.replace(/"/g,'""')}"`:''+s;}).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
+    a.download = filename; a.click();
+}
+
+function fd(str) { if(!str)return''; const[y,m,d]=str.split('-'); return`${d}/${m}/${y}`; }
+function fm(mins) { if(!mins)return'0h00'; return`${Math.floor(mins/60)}h${String(mins%60).padStart(2,'0')}`; }
+
+/* ── Modal close ── */
+document.querySelectorAll('.close-modal').forEach(b => {
+    b.addEventListener('click', () => b.closest('.modal').style.display = 'none');
+});
+document.querySelectorAll('.modal').forEach(m => {
+    m.addEventListener('click', e => { if(e.target===m) m.style.display='none'; });
+});
+document.addEventListener('keydown', e => {
+    if(e.key==='Escape') document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+});
+</script>
 </body>
 </html>
