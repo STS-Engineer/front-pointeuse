@@ -33,7 +33,9 @@
 
 class AttendanceSystem {
     constructor() {
-        this.baseUrl = 'https://pointeuse-back.azurewebsites.net/api';
+        this.baseUrl = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+            ? 'http://localhost:3000/api'
+            : 'https://pointeuse-back.azurewebsites.net/api';
 
         // ── Master data (loaded once from DB) ──────────────────
         this.allData = [];        // ALL attendance records from DB

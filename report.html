@@ -213,6 +213,74 @@
         }
 
         .export-actions { margin-left: auto; }
+
+        .special-days-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 18px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .special-days-form,
+        .special-days-list {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .special-days-list {
+            margin-top: 12px;
+            align-items: center;
+        }
+
+        .special-day-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .special-day-pill.ferie { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+        .special-day-pill.conge { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+        .special-day-pill button { border: 0; background: transparent; color: inherit; cursor: pointer; padding: 0; }
+
+        .week-block {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .week-header {
+            width: 100%;
+            border: 0;
+            background: #f8fafc;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .week-title { font-weight: 700; color: #1e293b; font-size: 14px; }
+        .week-meta { color: #64748b; font-size: 12px; font-weight: 500; }
+        .week-body { display: none; }
+        .week-block.open .week-body { display: block; }
+        .day-ferie { color: #92400e; font-weight: 600; }
+        .day-conge-global { color: #1d4ed8; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -282,6 +350,30 @@
         </div>
     </div>
 
+    <div class="special-days-panel">
+        <div class="special-days-form">
+            <div class="report-control-group">
+                <label><i class="fas fa-calendar-plus"></i> Jour special</label>
+                <input type="date" id="special-day-date" class="filter-input">
+            </div>
+            <div class="report-control-group">
+                <label><i class="fas fa-tags"></i> Type</label>
+                <select id="special-day-type" class="filter-input">
+                    <option value="conge_paye_global">Conge paye collectif</option>
+                    <option value="jour_ferie">Jour ferie</option>
+                </select>
+            </div>
+            <div class="report-control-group">
+                <label><i class="fas fa-pen"></i> Libelle</label>
+                <input type="text" id="special-day-label" class="filter-input" placeholder="Optionnel">
+            </div>
+            <button class="btn-secondary" onclick="saveSpecialDay()">
+                <i class="fas fa-plus"></i> Ajouter
+            </button>
+        </div>
+        <div class="special-days-list" id="special-days-list"></div>
+    </div>
+
     <!-- Summary Cards -->
     <div class="summary-cards report-summary" id="summary-cards"></div>
 
@@ -315,12 +407,16 @@
 <div id="notification-container"></div>
 
 <script>
-const BASE_URL = 'https://pointeuse-back.azurewebsites.net/api';
+const BASE_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:3000/api'
+    : 'https://pointeuse-back.azurewebsites.net/api';
 // Local test → change to: const BASE_URL = 'http://localhost:3000/api';
 
 let currentTab = 'weekly';
 let lastReportData = null;
 let lastLateData = null;
+let currentSpecialDays = [];
+let autoRunTimer = null;
 
 // ── Clock ──────────────────────────────────────────────────────
 (function clock() {
@@ -393,7 +489,90 @@ function setRange(type, btn) {
     const mon = new Date(today); mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
     document.getElementById('start-date').value = mon.toISOString().split('T')[0];
     document.getElementById('end-date').value   = today.toISOString().split('T')[0];
+    document.getElementById('special-day-date').value = today.toISOString().split('T')[0];
+    loadSpecialDays();
 })();
+
+document.getElementById('start-date').addEventListener('change', handleReportInputChange);
+document.getElementById('end-date').addEventListener('change', handleReportInputChange);
+
+async function handleReportInputChange() {
+    await loadSpecialDays();
+    scheduleReportRerender();
+}
+
+function scheduleReportRerender() {
+    clearTimeout(autoRunTimer);
+    autoRunTimer = setTimeout(() => {
+        const start = document.getElementById('start-date').value;
+        const end = document.getElementById('end-date').value;
+        if (start && end) runReport();
+    }, 250);
+}
+
+async function loadSpecialDays() {
+    const start = document.getElementById('start-date').value;
+    const end = document.getElementById('end-date').value;
+    if (!start || !end) return;
+
+    try {
+        const res = await fetch(`${BASE_URL}/special-days?start=${start}&end=${end}`);
+        const data = await res.json();
+        currentSpecialDays = data.success ? (data.days || []) : [];
+        renderSpecialDays();
+    } catch (e) {
+        currentSpecialDays = [];
+        renderSpecialDays();
+    }
+}
+
+function renderSpecialDays() {
+    const list = document.getElementById('special-days-list');
+    if (!currentSpecialDays.length) {
+        list.innerHTML = `<span style="font-size:12px; color:#94a3b8;">Aucun jour special dans cette periode</span>`;
+        return;
+    }
+
+    list.innerHTML = currentSpecialDays.map(day => {
+        const isHoliday = day.type === 'jour_ferie';
+        const label = day.label || (isHoliday ? 'Jour ferie' : 'Conge paye collectif');
+        return `
+            <span class="special-day-pill ${isHoliday ? 'ferie' : 'conge'}">
+                <i class="fas ${isHoliday ? 'fa-star' : 'fa-umbrella-beach'}"></i>
+                ${formatDate(day.date)} - ${label}
+                <button title="Supprimer" onclick="deleteSpecialDay(${day.id})"><i class="fas fa-times"></i></button>
+            </span>`;
+    }).join('');
+}
+
+async function saveSpecialDay() {
+    const date = document.getElementById('special-day-date').value;
+    const type = document.getElementById('special-day-type').value;
+    const label = document.getElementById('special-day-label').value.trim();
+    if (!date) return showNotification('Selectionnez une date', 'warning');
+
+    const res = await fetch(`${BASE_URL}/special-days`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, type, label }),
+    });
+    const data = await res.json();
+    if (!data.success) return showNotification(data.error || 'Erreur ajout jour special', 'error');
+
+    document.getElementById('special-day-label').value = '';
+    showNotification('Jour special ajoute', 'success');
+    await loadSpecialDays();
+    scheduleReportRerender();
+}
+
+async function deleteSpecialDay(id) {
+    const res = await fetch(`${BASE_URL}/special-days/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!data.success) return showNotification(data.error || 'Erreur suppression', 'error');
+    showNotification('Jour special supprime', 'success');
+    await loadSpecialDays();
+    scheduleReportRerender();
+}
 
 // ── Run ────────────────────────────────────────────────────────
 async function runReport() {
@@ -525,6 +704,165 @@ async function runWeeklyReport(start, end) {
 }
 
 // ── Late ───────────────────────────────────────────────────────
+async function runWeeklyReport(start, end) {
+    const res = await fetch(`${BASE_URL}/report?start=${start}&end=${end}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error);
+    lastReportData = data;
+
+    const s = data.summary || {};
+    document.getElementById('summary-cards').innerHTML = `
+        <div class="summary-card">
+            <div class="card-icon blue"><i class="fas fa-calendar-week"></i></div>
+            <div class="card-content"><h3>${s.workingDays || data.weekDays.length}</h3><p>Jours ouvrables</p><small>${formatDate(start)} - ${formatDate(end)}</small></div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon blue"><i class="fas fa-business-time"></i></div>
+            <div class="card-content"><h3>${s.totalWorkedHours || '0h00'}</h3><p>Heures pointage</p><small>Toute l'equipe</small></div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon orange"><i class="fas fa-star"></i></div>
+            <div class="card-content"><h3>${s.holidayDays || 0}</h3><p>Jours feries</p><small>${(s.holidayDates || []).map(formatDate).join(', ') || 'Aucun'}</small></div>
+        </div>
+        <div class="summary-card">
+            <div class="card-icon green"><i class="fas fa-umbrella-beach"></i></div>
+            <div class="card-content"><h3>${formatDays(s.totalCongeDays || 0)}</h3><p>Jours de conge</p><small>RH + collectif</small></div>
+        </div>`;
+    document.getElementById('summary-cards').style.display = 'grid';
+    document.getElementById('export-btn').style.display = 'inline-flex';
+    document.getElementById('last-update').textContent = new Date().toLocaleString('fr-FR');
+
+    if (!data.employees.length) {
+        document.getElementById('report-content').innerHTML = `
+            <div class="report-state"><div class="state-icon">-</div><p>Aucune donnee pour cette periode</p></div>`;
+        return;
+    }
+
+    document.getElementById('report-content').innerHTML = `
+        ${renderPeriodTableWithWeeklySummaries(data, start, end)}
+        <div class="legend-bar">
+            <strong>Legende :</strong>
+            <span style="color:#059669;">■</span> Present &nbsp;
+            <span style="color:#d97706;">■</span> Retard &nbsp;
+            <span style="color:#3b82f6;">■</span> Conge &nbsp;
+            <span style="color:#92400e;">■</span> Jour ferie &nbsp;
+            <span style="color:#8b5cf6;">■</span> Mission &nbsp;
+            <span style="color:#ef4444;">■</span> Incomplet &nbsp;
+            <span style="color:#9ca3af;">■</span> Absent -
+            Les conges payes collectifs comptent comme 1 jour de conge et 0h travaillee.
+        </div>`;
+}
+
+function buildPeriodColumns(data) {
+    const weekByDate = new Map();
+    (data.weeks || []).forEach(week => {
+        week.weekDays.forEach(date => weekByDate.set(date, week));
+    });
+
+    const columns = [];
+    (data.weekDays || []).forEach((date, index) => {
+        columns.push({ type: 'day', date });
+        const current = new Date(date + 'T00:00:00');
+        const nextDate = data.weekDays[index + 1];
+        const next = nextDate ? new Date(nextDate + 'T00:00:00') : null;
+        const isFriday = current.getDay() === 5;
+        const crossesToNextWeek = next && next.getDay() === 1;
+
+        if ((isFriday && crossesToNextWeek) || (!nextDate && weekByDate.has(date))) {
+            columns.push({ type: 'week-summary', week: weekByDate.get(date) });
+        }
+    });
+
+    return columns;
+}
+
+function renderPeriodTableWithWeeklySummaries(data, start, end) {
+    const columns = buildPeriodColumns(data);
+    const weekEmployeeMap = new Map();
+    (data.weeks || []).forEach(week => {
+        week.employees.forEach(emp => {
+            weekEmployeeMap.set(`${week.index}__${emp.uid}`, emp);
+        });
+    });
+
+    const headers = columns.map(col => {
+        if (col.type === 'week-summary') {
+            return `<th class="day-th" style="background:#eff6ff;color:#1d4ed8;">Synthese<br>S${col.week.index}</th>`;
+        }
+        const dt = new Date(col.date + 'T00:00:00');
+        return `<th class="day-th">${dt.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })}</th>`;
+    }).join('');
+
+    const rows = data.employees.map(emp => {
+        const cells = columns.map(col => {
+            if (col.type === 'week-summary') {
+                const weekEmp = weekEmployeeMap.get(`${col.week.index}__${emp.uid}`);
+                return `
+                    <td class="day-td" style="background:#f8fafc;">
+                        <strong style="color:#1d4ed8;">${weekEmp?.totalHours || '0h00'}</strong><br>
+                        <small style="color:#64748b;">${formatDays(weekEmp?.congeDays || 0)} conge</small>
+                    </td>`;
+            }
+
+            const day = emp.days.find(d => d.date === col.date) || { status: 'absent', displayText: '-' };
+            const cls = {
+                present: 'day-present',
+                late: 'day-late',
+                conge: 'day-conge',
+                conge_demi: 'day-conge',
+                conge_global: 'day-conge-global',
+                ferie: 'day-ferie',
+                mission: 'day-mission',
+                incomplete: 'day-incomplete',
+            }[day.status] || 'day-absent';
+            return `<td class="day-td ${cls}">${day.displayText}</td>`;
+        }).join('');
+
+        const lateBadge = emp.lateCount > 0
+            ? `<span class="late-badge"><i class="fas fa-exclamation-triangle" style="font-size:10px;"></i> ${emp.lateCount}</span>`
+            : `<span class="late-badge-zero">-</span>`;
+
+        return `
+            <tr>
+                <td>
+                    <strong style="color:#1f2937;">${emp.name}</strong><br>
+                    <small style="color:#6b7280;">Mat: ${emp.cardNo || emp.matricule || '-'}</small>
+                </td>
+                ${cells}
+                <td class="total-cell">${emp.totalHours}</td>
+                <td style="text-align:center;">${formatDays(emp.congeDays || 0)}</td>
+                <td style="text-align:center;">${lateBadge}</td>
+            </tr>`;
+    }).join('');
+
+    return `
+        <div class="table-container">
+            <div class="table-header">
+                <h2><i class="fas fa-table" style="color:#3b82f6; margin-right:8px;"></i>Detail par employe</h2>
+                <small style="color:#94a3b8; font-weight:400;">${data.employees.length} employes - ${formatDate(start)} au ${formatDate(end)}</small>
+            </div>
+            <div class="table-responsive">
+                <table id="attendance-table">
+                    <thead>
+                        <tr>
+                            <th>Employe</th>
+                            ${headers}
+                            <th style="text-align:center;">Total periode</th>
+                            <th style="text-align:center;">Conges</th>
+                            <th style="text-align:center;">Retards</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>
+        </div>`;
+}
+
+function formatDays(value) {
+    const n = Number(value || 0);
+    return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
+}
+
 async function runLateReport(start, end) {
     const res  = await fetch(`${BASE_URL}/report/late?start=${start}&end=${end}`);
     const data = await res.json();
