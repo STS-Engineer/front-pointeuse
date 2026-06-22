@@ -1109,7 +1109,9 @@ tbody tr:last-child td { border-bottom:none; }
 <script src="app.js"></script>
 
 <script>
-const REPORT_BASE_URL = 'https://pointeuse-back.azurewebsites.net/api';
+const REPORT_BASE_URL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    ? 'http://localhost:3000/api'
+    : 'https://pointeuse-back.azurewebsites.net/api';
 let currentReportTab = 'weekly';
 let lastReportData = null;
 let lastLateData = null;
@@ -1493,13 +1495,29 @@ function renderWeeklyReport(data) {
         return;
     }
 
-    const dayHeaders = data.weekDays.map(d => {
+    const reportColumns = buildReportColumns(data);
+    const weekEmployeeMap = buildWeekEmployeeMap(data);
+
+    const dayHeaders = reportColumns.map(col => {
+        if (col.type === 'week-summary') {
+            return `<th class="day-th" style="background:#eff6ff;color:#1d4ed8;">Synthese S${col.week.index}</th>`;
+        }
+        const d = col.date;
         const dt = new Date(d + 'T00:00:00');
         return `<th class="day-th">${dt.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' })}</th>`;
     }).join('');
 
     const rows = employees.map(emp => {
-        const cells = data.weekDays.map((date, index) => {
+        const cells = reportColumns.map((col) => {
+            if (col.type === 'week-summary') {
+                const weekEmp = weekEmployeeMap.get(`${col.week.index}__${emp.uid}`);
+                return `<td class="day-cell" style="background:#f8fafc;text-align:center">
+                    <strong style="color:#1d4ed8">${escapeHtml(weekEmp?.totalHours || '0h00')}</strong>
+                    <div style="font-size:11px;color:var(--gray-500);margin-top:3px">${formatCongeDays(weekEmp?.congeDays || 0)} conge</div>
+                </td>`;
+            }
+            const date = col.date;
+            const index = data.weekDays.indexOf(date);
             const day = getEmployeeDayByDate(emp, date, index);
             const cls = { present:'dc-present', late:'dc-late', conge:'dc-conge', conge_demi:'dc-conge', mission:'dc-mission', incomplete:'dc-incomplete' }[day.status] || 'dc-absent';
             return `<td class="day-cell ${cls}">${escapeHtml(day.displayText || '—')}</td>`;
@@ -1524,13 +1542,48 @@ function renderWeeklyReport(data) {
                     <tr>
                         <th>Employé</th>
                         ${dayHeaders}
-                        <th style="text-align:center">Total</th>
+                        <th style="text-align:center">Total periode</th>
                         <th style="text-align:center">Retards</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table>
         </div>`;
+}
+
+function buildReportColumns(data) {
+    const weekByDate = new Map();
+    (data.weeks || []).forEach(week => {
+        (week.weekDays || []).forEach(date => weekByDate.set(date, week));
+    });
+
+    const columns = [];
+    (data.weekDays || []).forEach((date, index) => {
+        columns.push({ type: 'day', date });
+        const current = new Date(date + 'T00:00:00');
+        const nextDate = data.weekDays[index + 1];
+        const next = nextDate ? new Date(nextDate + 'T00:00:00') : null;
+        const crossesWeek = current.getDay() === 5 && next && next.getDay() === 1;
+
+        if (crossesWeek && weekByDate.has(date)) {
+            columns.push({ type: 'week-summary', week: weekByDate.get(date) });
+        }
+    });
+
+    return columns;
+}
+
+function buildWeekEmployeeMap(data) {
+    const map = new Map();
+    (data.weeks || []).forEach(week => {
+        (week.employees || []).forEach(emp => map.set(`${week.index}__${emp.uid}`, emp));
+    });
+    return map;
+}
+
+function formatCongeDays(value) {
+    const n = Number(value || 0);
+    return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
 }
 
 async function runLateReport(start, end) {
