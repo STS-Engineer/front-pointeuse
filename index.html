@@ -967,6 +967,22 @@ tbody tr:last-child td { border-bottom:none; }
                         </div>
                     </div>
 
+                    <div class="special-days-panel">
+                        <div class="special-days-form">
+                            <span class="f-label">Jour spécial</span>
+                            <input type="date" id="special-day-date" class="finput">
+                            <select id="special-day-type" class="finput">
+                                <option value="jour_ferie">Jour férié</option>
+                                <option value="conge_paye_global">Congé payé collectif</option>
+                            </select>
+                            <input type="text" id="special-day-label" class="finput" placeholder="Libellé optionnel">
+                            <button class="btn btn-primary" id="special-day-add-btn" onclick="saveSpecialDay()">
+                                <i class="fas fa-plus"></i> Ajouter
+                            </button>
+                        </div>
+                        <div class="special-days-list" id="special-days-list" style="margin-top:10px"></div>
+                    </div>
+
                     <!-- Custom date inputs row -->
                     <div class="filter-custom-row" id="filter-custom-row">
                         <span class="f-label">Du</span>
@@ -1011,6 +1027,7 @@ tbody tr:last-child td { border-bottom:none; }
                     </div>
 
                     <div id="report-kpis" class="report-kpi-row" style="display:none"></div>
+                    <div id="special-days-summary" class="report-kpi-row" style="display:none"></div>
 
                     <div id="report-content">
                         <div class="report-state">
@@ -1119,6 +1136,7 @@ let filteredWeeklyEmployees = [];
 let filteredLateArrivals = [];
 let filteredLateByDate = {};
 let reportEmployeesCache = [];
+let currentSpecialDays = [];
 
 /* ─── FILTER MODE ────────────────────────────────────────────────────────── */
 // 'custom' = user types dates manually, quick chips are disabled
@@ -1191,6 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     bindReportFilters();
     patchAttendanceSystemSafely();
     syncDotsFromDOM();
+    loadSpecialDays();
 });
 
 function patchAttendanceSystemSafely() {
@@ -1310,6 +1329,7 @@ function bindReportFilters() {
         if (!el) return;
         el.addEventListener('change', () => {
             if (filterMode !== 'custom') setFilterMode('custom');
+            loadSpecialDays();
         });
     });
 }
@@ -1323,6 +1343,80 @@ function clearReportFilters() {
     document.getElementById('active-period-display').style.display = 'none';
     setFilterMode('custom');
     initReportDates();
+    loadSpecialDays();
+    if (lastReportData || lastLateData) runEmbeddedReport();
+}
+
+async function loadSpecialDays() {
+    const start = document.getElementById('report-start-date')?.value;
+    const end = document.getElementById('report-end-date')?.value;
+    if (!start || !end) return;
+
+    try {
+        const res = await fetch(`${REPORT_BASE_URL}/special-days?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+        const data = await res.json();
+        currentSpecialDays = data.success ? (data.days || []) : [];
+        renderSpecialDays();
+    } catch (error) {
+        currentSpecialDays = [];
+        renderSpecialDays();
+    }
+}
+
+function renderSpecialDays() {
+    const el = document.getElementById('special-days-list');
+    if (!el) return;
+
+    if (!currentSpecialDays.length) {
+        el.innerHTML = '<span style="font-size:12px;color:var(--gray-400)">Aucun jour spécial dans cette période</span>';
+        return;
+    }
+
+    el.innerHTML = currentSpecialDays.map(day => {
+        const isHoliday = day.type === 'jour_ferie';
+        const label = day.label || (isHoliday ? 'Jour férié' : 'Congé payé collectif');
+        return `
+            <span class="range-chip active" style="display:inline-flex;align-items:center;gap:8px;background:${isHoliday ? 'rgba(59,130,246,.1)' : 'rgba(16,185,129,.1)'};border-color:${isHoliday ? 'rgba(59,130,246,.3)' : 'rgba(16,185,129,.3)'}">
+                <i class="fas ${isHoliday ? 'fa-star' : 'fa-umbrella-beach'}"></i>
+                <span>${formatDate(day.date)} · ${escapeHtml(label)}</span>
+                <button type="button" onclick="deleteSpecialDay(${day.id})" style="border:0;background:none;color:inherit;cursor:pointer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </span>`;
+    }).join('');
+}
+
+async function saveSpecialDay() {
+    const date = document.getElementById('special-day-date')?.value;
+    const type = document.getElementById('special-day-type')?.value;
+    const label = document.getElementById('special-day-label')?.value?.trim();
+    if (!date || !type) return;
+
+    const res = await fetch(`${REPORT_BASE_URL}/special-days`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date, type, label }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+        showNotification(data.error || 'Erreur ajout jour spécial', 'error');
+        return;
+    }
+
+    document.getElementById('special-day-label').value = '';
+    await loadSpecialDays();
+    if (lastReportData || lastLateData) runEmbeddedReport();
+}
+
+async function deleteSpecialDay(id) {
+    const res = await fetch(`${REPORT_BASE_URL}/special-days/${id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (!data.success) {
+        showNotification(data.error || 'Erreur suppression jour spécial', 'error');
+        return;
+    }
+
+    await loadSpecialDays();
     if (lastReportData || lastLateData) runEmbeddedReport();
 }
 
@@ -1345,6 +1439,7 @@ function switchReportTab(tab, el) {
 
 function resetReport() {
     document.getElementById('report-kpis').style.display = 'none';
+    document.getElementById('special-days-summary').style.display = 'none';
     document.getElementById('report-export-btn').style.display = 'none';
     document.getElementById('report-export-btn-quick').style.display = 'none';
     document.getElementById('report-legend').style.display = 'none';
@@ -1392,6 +1487,7 @@ function setReportRange(type, btn) {
     // Write the dates (they drive the API call) but keep the inputs dimmed
     document.getElementById('report-start-date').value = start;
     document.getElementById('report-end-date').value = end;
+    document.getElementById('special-day-date').value = end;
 
     // Highlight the active chip
     document.querySelectorAll('.range-chip').forEach(b => b.classList.remove('active'));
@@ -1403,6 +1499,7 @@ function setReportRange(type, btn) {
     pill.style.display = 'flex';
 
     runEmbeddedReport();
+    loadSpecialDays();
 }
 
 function initReportDates() {
@@ -1412,6 +1509,7 @@ function initReportDates() {
     mon.setDate(today.getDate() - (day === 0 ? 6 : day - 1));
     document.getElementById('report-start-date').value = mon.toISOString().split('T')[0];
     document.getElementById('report-end-date').value = today.toISOString().split('T')[0];
+    document.getElementById('special-day-date').value = today.toISOString().split('T')[0];
 }
 
 async function runEmbeddedReport() {
@@ -1467,9 +1565,14 @@ function renderWeeklyReport(data) {
 
     const totalLate = employees.reduce((sum, emp) => sum + Number(emp.lateCount || 0), 0);
     const totalHours = employees.reduce((sum, emp) => sum + parseHoursToNumber(emp.totalHours), 0);
+    const totalCongeDays = Number(data.summary?.totalCongeDays || 0);
+    const holidayDays = Number(data.summary?.holidayDays || 0);
+    const totalHolidayDays = Number(data.summary?.totalHolidayDays || 0);
+    const holidayDates = Array.isArray(data.summary?.holidayDates) ? data.summary.holidayDates : [];
+    const workingDays = Number(data.summary?.workingDays || data.weekDays.length || 0);
 
     document.getElementById('report-kpis').innerHTML = `
-        <div class="rkpi"><div class="rkpi-val">${data.weekDays.length}</div><div class="rkpi-lbl">Jours ouvrés · ${formatDate(data.start)} → ${formatDate(data.end)}</div></div>
+        <div class="rkpi"><div class="rkpi-val">${workingDays}</div><div class="rkpi-lbl">Jours ouvrables · ${formatDate(data.start)} → ${formatDate(data.end)}</div></div>
         <div class="rkpi rkpi-green"><div class="rkpi-val">${employees.length}</div><div class="rkpi-lbl">Employés affichés</div></div>
         <div class="rkpi rkpi-blue"><div class="rkpi-val">${formatHoursNumber(totalHours)}</div><div class="rkpi-lbl">Heures filtrées</div></div>
         <div class="rkpi rkpi-amber"><div class="rkpi-val">${totalLate}</div><div class="rkpi-lbl">Retards filtrés</div></div>`;
@@ -1486,6 +1589,16 @@ function renderWeeklyReport(data) {
 
     document.getElementById('report-legend').style.display = 'flex';
 
+    const specialDaysSummary = document.getElementById('special-days-summary');
+    if (specialDaysSummary) {
+        specialDaysSummary.innerHTML = `
+            <div class="rkpi rkpi-blue"><div class="rkpi-val">${holidayDays}</div><div class="rkpi-lbl">Jours fériés</div></div>
+            <div class="rkpi rkpi-green"><div class="rkpi-val">${formatCongeCount(totalCongeDays)}</div><div class="rkpi-lbl">Congés payés</div></div>
+            <div class="rkpi"><div class="rkpi-val">${formatHoursNumber(totalHours)}</div><div class="rkpi-lbl">Heures pointées</div></div>
+            <div class="rkpi rkpi-amber"><div class="rkpi-val">${totalHolidayDays}</div><div class="rkpi-lbl">Fériés calculés</div></div>`;
+        specialDaysSummary.style.display = 'grid';
+    }
+
     if (!employees.length) {
         document.getElementById('report-content').innerHTML = `
             <div class="report-state">
@@ -1498,23 +1611,31 @@ function renderWeeklyReport(data) {
     const reportColumns = buildReportColumns(data);
     const weekEmployeeMap = buildWeekEmployeeMap(data);
 
-    const dayHeaders = reportColumns.map(col => {
+    const dayHeadersTop = reportColumns.map(col => {
         if (col.type === 'week-summary') {
-            return `<th class="day-th" style="background:#eff6ff;color:#1d4ed8;">Synthese S${col.week.index}</th>`;
+            return `<th class="day-th" colspan="3" style="background:#eff6ff;color:#1d4ed8;">Synthese S${col.week.index}</th>`;
         }
         const d = col.date;
         const dt = new Date(d + 'T00:00:00');
-        return `<th class="day-th">${dt.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' })}</th>`;
+        return `<th class="day-th" rowspan="2">${dt.toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' })}</th>`;
+    }).join('');
+
+    const dayHeadersBottom = reportColumns.map(col => {
+        if (col.type !== 'week-summary') return '';
+        return `
+            <th class="day-th" style="font-size:11px;color:var(--gray-500)">Heures</th>
+            <th class="day-th" style="font-size:11px;color:var(--gray-500)">Congés</th>
+            <th class="day-th" style="font-size:11px;color:var(--gray-500)">Fériés</th>`;
     }).join('');
 
     const rows = employees.map(emp => {
         const cells = reportColumns.map((col) => {
             if (col.type === 'week-summary') {
                 const weekEmp = weekEmployeeMap.get(`${col.week.index}__${emp.uid}`);
-                return `<td class="day-cell" style="background:#f8fafc;text-align:center">
-                    <strong style="color:#1d4ed8">${escapeHtml(weekEmp?.totalHours || '0h00')}</strong>
-                    <div style="font-size:11px;color:var(--gray-500);margin-top:3px">${formatCongeDays(weekEmp?.congeDays || 0)} conge</div>
-                </td>`;
+                return `
+                    <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:#1d4ed8">${escapeHtml(weekEmp?.totalHours || '0h00')}</strong></td>
+                    <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:var(--green-600)">${formatCongeDays(weekEmp?.congeDays || 0)}</strong></td>
+                    <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:var(--amber-600)">${Number(weekEmp?.holidayDays || 0)}</strong></td>`;
             }
             const date = col.date;
             const index = data.weekDays.indexOf(date);
@@ -1530,7 +1651,9 @@ function renderWeeklyReport(data) {
         return `<tr>
             <td><div class="cell-name">${escapeHtml(emp.name)}</div><div class="cell-id">${escapeHtml(emp.cardNo || emp.matricule || '—')}</div></td>
             ${cells}
-            <td class="total-cell">${escapeHtml(emp.totalHours)}</td>
+            <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:#1d4ed8">${escapeHtml(emp.totalHours)}</strong></td>
+            <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:var(--green-600)">${formatCongeDays(emp.congeDays || 0)}</strong></td>
+            <td class="day-cell" style="background:#f8fafc;text-align:center"><strong style="color:var(--amber-600)">${Number(emp.holidayDays || 0)}</strong></td>
             <td style="text-align:center">${lateBadge}</td>
         </tr>`;
     }).join('');
@@ -1540,10 +1663,16 @@ function renderWeeklyReport(data) {
             <table>
                 <thead>
                     <tr>
-                        <th>Employé</th>
-                        ${dayHeaders}
-                        <th style="text-align:center">Total periode</th>
-                        <th style="text-align:center">Retards</th>
+                        <th rowspan="2">Employé</th>
+                        ${dayHeadersTop}
+                        <th colspan="3" class="day-th" style="background:#eff6ff;color:#1d4ed8;">Total periode</th>
+                        <th rowspan="2" style="text-align:center">Retards</th>
+                    </tr>
+                    <tr>
+                        ${dayHeadersBottom}
+                        <th class="day-th" style="font-size:11px;color:var(--gray-500)">Heures</th>
+                        <th class="day-th" style="font-size:11px;color:var(--gray-500)">Congés</th>
+                        <th class="day-th" style="font-size:11px;color:var(--gray-500)">Fériés</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
@@ -1582,6 +1711,11 @@ function buildWeekEmployeeMap(data) {
 }
 
 function formatCongeDays(value) {
+    const n = Number(value || 0);
+    return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
+}
+
+function formatCongeCount(value) {
     const n = Number(value || 0);
     return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
 }
