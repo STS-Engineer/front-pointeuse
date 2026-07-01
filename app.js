@@ -769,18 +769,21 @@ class AttendanceSystem {
     nextPage() { const t = Math.ceil(this.filteredData.length / this.itemsPerPage); if (this.currentPage < t) { this.currentPage++; this.renderTable(); this.updatePagination(); } }
 
     // ── Status helpers ─────────────────────────────────────────
+    // FIXED — unified 8:30 threshold, matches backend
     getAttendanceStatus(record) {
         if (!record) return 'Inconnu';
         if (record.status && record.status !== 'Absent') return record.status;
         if (!record.arrivalTime && !record.departureTime) return 'Absent';
         if (record.arrivalTime && !record.departureTime) {
-            return record.date === new Date().toISOString().split('T')[0] ? 'En cours' : 'Présent (départ manquant)';
+            return record.date === new Date().toISOString().split('T')[0]
+                ? 'En cours'
+                : 'Présent (départ manquant)';
         }
         if (!record.arrivalTime && record.departureTime) return 'Arrivée manquante';
         const [h, m] = record.arrivalTime.split(':').map(Number);
         const mins = h * 60 + m;
-        if (mins < 8 * 60) return "À l'heure";
-        if (mins <= 9 * 60) return 'Présent';
+        const LATE_THRESHOLD = 8 * 60 + 30; // 08:30 — same as backend
+        if (mins <= LATE_THRESHOLD) return "À l'heure";
         return 'En retard';
     }
 
