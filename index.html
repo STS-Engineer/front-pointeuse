@@ -1894,22 +1894,68 @@ function groupByDate(records) {
         return acc;
     }, {});
 }
-
 function exportReportCSV() {
     if (currentReportTab === 'weekly' && lastReportData) {
         const data = lastReportData;
         const employees = filteredWeeklyEmployees.length ? filteredWeeklyEmployees : data.employees;
-        const dayLabels = data.weekDays.map(date => new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' }));
-        const headers = ['Employé', 'Matricule', ...dayLabels, 'Total Heures', 'Nb Retards'];
-        const rows = employees.map(emp => [
-            emp.name,
-            emp.cardNo || emp.matricule || '',
-            ...data.weekDays.map((date, index) => String(getEmployeeDayByDate(emp, date, index).displayText || '').replace(/,/g, ';')),
-            emp.totalHours,
-            emp.lateCount
-        ]);
-        downloadReportXlsx([headers, ...rows], `rapport_semaine_${data.start}_${data.end}.xlsx`, 'Rapport semaine');
+
+        const reportColumns = buildReportColumns(data);
+        const weekEmployeeMap = buildWeekEmployeeMap(data);
+
+        const topHeader = ['Employé', 'Matricule'];
+        const bottomHeader = ['', ''];
+
+        reportColumns.forEach(col => {
+            if (col.type === 'week-summary') {
+                topHeader.push(`Synthese S${col.week.index}`, '', '');
+                bottomHeader.push('Heures', 'Congés', 'Fériés');
+            } else {
+                const label = new Date(col.date + 'T00:00:00')
+                    .toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' });
+                topHeader.push(label);
+                bottomHeader.push('');
+            }
+        });
+
+        topHeader.push('Total periode', '', '', 'Retards');
+        bottomHeader.push('Heures', 'Congés', 'Fériés', '');
+
+        const rows = employees.map(emp => {
+            const row = [emp.name, emp.cardNo || emp.matricule || ''];
+
+            reportColumns.forEach(col => {
+                if (col.type === 'week-summary') {
+                    const weekEmp = weekEmployeeMap.get(`${col.week.index}__${emp.uid}`);
+                    row.push(
+                        weekEmp?.totalHours || '0h00',
+                        formatCongeDays(weekEmp?.congeDays || 0),
+                        Number(weekEmp?.holidayDays || 0)
+                    );
+                } else {
+                    const index = data.weekDays.indexOf(col.date);
+                    row.push(String(getEmployeeDayByDate(emp, col.date, index).displayText || '').replace(/,/g, ';'));
+                }
+            });
+
+            row.push(
+                emp.totalHours,
+                formatCongeDays(emp.congeDays || 0),
+                Number(emp.holidayDays || 0),
+                emp.lateCount
+            );
+
+            return row;
+        });
+
+        downloadWeeklyReportXlsx(
+            [topHeader, bottomHeader, ...rows],
+            `rapport_semaine_${data.start}_${data.end}.xlsx`,
+            'Rapport semaine',
+            reportColumns
+        );
+
         showNotification(`${employees.length} employés exportés`, 'success');
+
     } else if (currentReportTab === 'late' && lastLateData) {
         const data = lastLateData;
         const rowsSource = filteredLateArrivals.length ? filteredLateArrivals : data.lateArrivals;
@@ -1917,11 +1963,53 @@ function exportReportCSV() {
         const rows = rowsSource.map(r => [r.date, r.name, r.arrival, r.departure || '', r.lateDisplay || '']);
         downloadReportXlsx([headers, ...rows], `rapport_retards_${data.start}_${data.end}.xlsx`, 'Retards');
         showNotification(`${rowsSource.length} retards exportés`, 'success');
+
     } else {
         showNotification('Générez un rapport avant l\'export', 'warning');
     }
 }
 
+function downloadWeeklyReportXlsx(rows, filename, sheetName, reportColumns) {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    ws['!merges'] = [];
+
+    let colIndex = 2; // after Employé + Matricule
+
+    reportColumns.forEach(col => {
+        if (col.type === 'week-summary') {
+            ws['!merges'].push({
+                s: { r: 0, c: colIndex },
+                e: { r: 0, c: colIndex + 2 }
+            });
+            colIndex += 3;
+        } else {
+            ws['!merges'].push({
+                s: { r: 0, c: colIndex },
+                e: { r: 1, c: colIndex }
+            });
+            colIndex += 1;
+        }
+    });
+
+    ws['!merges'].push({
+        s: { r: 0, c: colIndex },
+        e: { r: 0, c: colIndex + 2 }
+    });
+
+    ws['!merges'].push({
+        s: { r: 0, c: colIndex + 3 },
+        e: { r: 1, c: colIndex + 3 }
+    });
+
+    ws['!cols'] = rows[0].map((_, i) => ({
+        wch: i < 2 ? 18 : 12
+    }));
+
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, filename);
+}
 function downloadReportXlsx(rows, filename, sheetName) {
     if (typeof downloadRowsAsXlsx !== 'function' || !downloadRowsAsXlsx(rows, filename, sheetName)) {
         showNotification('Export XLSX indisponible', 'error');
