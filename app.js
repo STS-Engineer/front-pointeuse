@@ -31,6 +31,31 @@
 // ATTENDANCE SYSTEM
 // ============================================================
 
+function downloadRowsAsXlsx(rows, filename, sheetName = 'Export') {
+    if (!window.XLSX) return false;
+
+    const worksheet = Array.isArray(rows[0])
+        ? XLSX.utils.aoa_to_sheet(rows)
+        : XLSX.utils.json_to_sheet(rows);
+    const matrix = Array.isArray(rows[0])
+        ? rows
+        : [Object.keys(rows[0] || {}), ...rows.map(row => Object.values(row))];
+
+    worksheet['!cols'] = (matrix[0] || []).map((_, colIndex) => ({
+        wch: Math.min(
+            45,
+            Math.max(10, ...matrix.map(row => String(row[colIndex] ?? '').length + 2))
+        ),
+    }));
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName.slice(0, 31));
+    XLSX.writeFile(workbook, filename.replace(/\.csv$/i, '.xlsx'));
+    return true;
+}
+
+window.downloadRowsAsXlsx = downloadRowsAsXlsx;
+
 class AttendanceSystem {
     constructor() {
         this.baseUrl = ['localhost', '127.0.0.1'].includes(window.location.hostname)
@@ -637,20 +662,13 @@ class AttendanceSystem {
             Statut: this.getAttendanceStatus(r),
             'Nb pointages': r.entries ? r.entries.length : 0,
         }));
-        const headers = Object.keys(rows[0]);
-        const csv = [
-            headers.join(','),
-            ...rows.map(row => headers.map(h => {
-                const v = String(row[h] ?? '');
-                return v.includes(',') || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
-            }).join(','))
-        ].join('\n');
-        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `presences_${new Date().toISOString().split('T')[0]}_${this.filteredData.length}lignes.csv`;
-        a.click();
-        this.showNotification(`${this.filteredData.length} lignes exportées`, 'success');
+        const filename = `presences_${new Date().toISOString().split('T')[0]}_${this.filteredData.length}lignes.xlsx`;
+        if (!downloadRowsAsXlsx(rows, filename, 'Presences')) {
+            this.showNotification('Export XLSX indisponible', 'error');
+            return;
+        }
+        this.showNotification(`${this.filteredData.length} lignes exportees en XLSX`, 'success');
+        return;
     }
 
     // ── Summary update ─────────────────────────────────────────
@@ -717,7 +735,7 @@ class AttendanceSystem {
                     <p>Si la pointeuse est hors ligne, les dernières données connues sont affichées.</p>
                 </div>
                 <div class="help-section"><h4>Exportation</h4>
-                    <p>Cliquez sur "Exporter CSV" pour télécharger les données filtrées.</p>
+                    <p>Cliquez sur "Exporter XLSX" pour télécharger les données filtrées.</p>
                 </div>
             </div>`;
         this.helpModal.style.display = 'flex';

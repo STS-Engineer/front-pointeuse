@@ -6,6 +6,7 @@
     <title>Rapports de Présence — ZKTeco</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
 :root {
@@ -1003,7 +1004,7 @@ tbody tr:last-child td { border-bottom:none; }
                                 <i class="fas fa-play"></i> Générer
                             </button>
                             <button class="btn" id="report-export-btn" onclick="exportReportCSV()" style="display:none">
-                                <i class="fas fa-file-arrow-down"></i> CSV
+                                <i class="fas fa-file-arrow-down"></i> XLSX
                             </button>
                         </div>
                     </div>
@@ -1021,7 +1022,7 @@ tbody tr:last-child td { border-bottom:none; }
                         </div>
                         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                             <button class="btn" id="report-export-btn-quick" onclick="exportReportCSV()" style="display:none">
-                                <i class="fas fa-file-arrow-down"></i> CSV
+                                <i class="fas fa-file-arrow-down"></i> XLSX
                             </button>
                         </div>
                     </div>
@@ -1907,17 +1908,23 @@ function exportReportCSV() {
             emp.totalHours,
             emp.lateCount
         ]);
-        downloadCSV([headers, ...rows], `rapport_semaine_${data.start}_${data.end}.csv`);
+        downloadReportXlsx([headers, ...rows], `rapport_semaine_${data.start}_${data.end}.xlsx`, 'Rapport semaine');
         showNotification(`${employees.length} employés exportés`, 'success');
     } else if (currentReportTab === 'late' && lastLateData) {
         const data = lastLateData;
         const rowsSource = filteredLateArrivals.length ? filteredLateArrivals : data.lateArrivals;
         const headers = ['Date', 'Employé', 'Arrivée', 'Départ', 'Retard'];
         const rows = rowsSource.map(r => [r.date, r.name, r.arrival, r.departure || '', r.lateDisplay || '']);
-        downloadCSV([headers, ...rows], `rapport_retards_${data.start}_${data.end}.csv`);
+        downloadReportXlsx([headers, ...rows], `rapport_retards_${data.start}_${data.end}.xlsx`, 'Retards');
         showNotification(`${rowsSource.length} retards exportés`, 'success');
     } else {
         showNotification('Générez un rapport avant l\'export', 'warning');
+    }
+}
+
+function downloadReportXlsx(rows, filename, sheetName) {
+    if (typeof downloadRowsAsXlsx !== 'function' || !downloadRowsAsXlsx(rows, filename, sheetName)) {
+        showNotification('Export XLSX indisponible', 'error');
     }
 }
 
