@@ -474,6 +474,7 @@ class AttendanceSystem {
                         <div style="font-weight:500;">${this.formatDate(record.date)}</div>
                         <div style="color:#6b7280; font-size:.85rem;">${record.dayName || ''}</div>
                         ${isToday ? '<span class="today-badge">Aujourd\'hui</span>' : ''}
+                        ${record.manuallyCorrected ? '<span class="manual-badge">Corrigé RH</span>' : ''}
                     </td>
                     <td>${record.arrivalTime
                         ? `<div class="time-display arrival-time">${record.arrivalTime}</div>`
@@ -486,7 +487,10 @@ class AttendanceSystem {
                         : (isToday && record.arrivalTime ? 'En cours...' : '-')}</div></td>
                     <td><div class="entries-container">${entriesDisplay}</div></td>
                     <td><span class="status-badge ${statusClass}">${status}</span></td>
-                    <td><button onclick="event.stopPropagation(); attendanceSystem.showDetails('${record.uid}', '${record.date}')" class="btn-small action-btn"><i class="fas fa-eye"></i></button></td>
+                    <td>
+                        <button onclick="event.stopPropagation(); attendanceSystem.showDetails('${record.uid}', '${record.date}')" class="btn-small action-btn" title="Détails"><i class="fas fa-eye"></i></button>
+                        <button onclick="event.stopPropagation(); attendanceSystem.openCorrectionModal('${record.uid}', '${record.date}')" class="btn-small correct-btn" title="Corriger"><i class="fas fa-pen"></i></button>
+                    </td>
                 </tr>`;
         });
 
@@ -542,6 +546,12 @@ class AttendanceSystem {
                         <div class="card-content"><div class="card-label">Statut</div><div class="card-value"><span class="status-badge ${statusClass}">${status}</span></div></div>
                     </div>
                 </div>
+                <div style="margin-top:1rem;text-align:right;">
+                    ${record.manuallyCorrected ? '<span class="manual-badge">Corrigé RH</span>' : ''}
+                    <button class="btn-small correct-btn" onclick="attendanceSystem.openCorrectionModal(\'${record.uid}\', \'${record.date}\')">
+                        <i class="fas fa-pen"></i> Corriger le pointage
+                    </button>
+                </div>
             </div>`;
 
         if (record.entries && record.entries.length > 0) {
@@ -560,6 +570,83 @@ class AttendanceSystem {
 
         this.modalBody.innerHTML = modalHTML;
         this.modal.style.display = 'flex';
+    }
+
+
+    openCorrectionModal(uid, date) {
+        const record = this.allData.find(r =>
+            r.uid.toString() === uid.toString() && r.date === date
+        );
+
+        if (!record) {
+            this.showNotification('Enregistrement introuvable', 'error');
+            return;
+        }
+
+        this.modalTitle.textContent = `Correction RH — ${record.name || 'Employé'} — ${this.formatDate(date)}`;
+        this.modalBody.innerHTML = `
+            <div class="employee-info-section">
+                <h3><i class="fas fa-pen"></i> Corriger le pointage</h3>
+                <p style="color:#6b7280;margin-bottom:1rem;">
+                    Utilisez cette correction uniquement si l'employé a oublié de pointer.
+                    La correction sera protégée contre la synchronisation automatique.
+                </p>
+                <div class="info-grid">
+                    <div class="info-item"><div class="info-label">Employé</div><div class="info-value">${record.name || '—'}</div></div>
+                    <div class="info-item"><div class="info-label">Date</div><div class="info-value">${this.formatDate(date)}</div></div>
+                    <div class="info-item"><div class="info-label">Statut actuel</div><div class="info-value">${this.getAttendanceStatus(record)}</div></div>
+                </div>
+                <form id="correction-form" class="correction-form" onsubmit="event.preventDefault(); attendanceSystem.submitAttendanceCorrection('${record.uid}', '${record.date}')">
+                    <label>Heure arrivée</label>
+                    <input id="correction-arrival" type="time" value="${record.arrivalTime || ''}" />
+
+                    <label>Heure départ</label>
+                    <input id="correction-departure" type="time" value="${record.departureTime || ''}" />
+
+                    <label>Commentaire</label>
+                    <textarea id="correction-comment" rows="3" placeholder="Exemple: oubli pointage départ"></textarea>
+
+                    <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">
+                        <button type="button" class="action-btn" onclick="attendanceSystem.closeModal()">Annuler</button>
+                        <button type="submit" class="correct-btn"><i class="fas fa-save"></i> Enregistrer correction</button>
+                    </div>
+                </form>
+            </div>`;
+        this.modal.style.display = 'flex';
+    }
+
+    async submitAttendanceCorrection(uid, date) {
+        const arrivalTime = document.getElementById('correction-arrival')?.value || null;
+        const departureTime = document.getElementById('correction-departure')?.value || null;
+        const comment = document.getElementById('correction-comment')?.value || '';
+
+        if (!arrivalTime && !departureTime) {
+            this.showNotification('Veuillez saisir au moins une heure', 'warning');
+            return;
+        }
+
+        try {
+            this.showLoading('Enregistrement de la correction...');
+            const response = await fetch(`${this.baseUrl}/attendance/correct`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ uid, date, arrivalTime, departureTime, comment, correctedBy: 'HR' }),
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Correction impossible');
+            }
+
+            this.showNotification('Correction enregistrée avec succès', 'success');
+            this.closeModal();
+            await this.loadAllData();
+        } catch (error) {
+            console.error('Correction error:', error);
+            this.showNotification(error.message || 'Erreur lors de la correction', 'error');
+        } finally {
+            this.hideLoading();
+        }
     }
 
     closeModal() { this.modal.style.display = 'none'; }
@@ -899,6 +986,12 @@ style.textContent = `
     .departure-entry{background:#fee2e2;color:#991b1b}
     .action-btn{padding:4px 8px;background:#f3f4f6;border:1px solid #d1d5db;border-radius:4px;cursor:pointer}
     .action-btn:hover{background:#e5e7eb}
+    .correct-btn{padding:4px 8px;background:#2563eb;color:white;border:1px solid #1d4ed8;border-radius:4px;cursor:pointer;font-weight:600}
+    .correct-btn:hover{background:#1d4ed8}
+    .manual-badge{background:#ede9fe;color:#5b21b6;padding:2px 6px;border-radius:4px;font-size:.75rem;display:inline-block;margin-top:4px;margin-left:4px}
+    .correction-form{display:grid;gap:.75rem;margin-top:1rem}
+    .correction-form label{font-size:.875rem;font-weight:600;color:#374151}
+    .correction-form input,.correction-form textarea{padding:.65rem;border:1px solid #d1d5db;border-radius:6px;font-size:.95rem}
     .page-number{min-width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border-color,#e5e7eb);border-radius:6px;cursor:pointer;font-size:.875rem;background:white}
     .page-number:hover{background:#f3f4f6}
     .page-number.active{background:#3b82f6;color:white;border-color:#3b82f6;font-weight:600}
