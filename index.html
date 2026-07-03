@@ -553,6 +553,23 @@ tbody tr:last-child td { border-bottom:none; }
 .dc-mission { color:var(--purple-600); font-weight:500; }
 .dc-incomplete { color:var(--red-600); }
 .dc-absent { color:var(--gray-400); font-style:italic; }
+.day-cell-correctable { cursor:pointer; }
+.day-cell-correctable:hover { background:var(--red-50); }
+.report-correct-btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:22px;
+    height:22px;
+    margin-left:6px;
+    border:1px solid #fecaca;
+    border-radius:4px;
+    background:#fff;
+    color:var(--red-600);
+    cursor:pointer;
+    vertical-align:middle;
+}
+.report-correct-btn:hover { background:var(--red-100); color:var(--red-700); }
 .total-cell { text-align:center; font-weight:700; font-size:13px; color:var(--blue-600); font-family:var(--mono); }
 
 .status-badge {
@@ -1549,6 +1566,29 @@ async function runEmbeddedReport() {
     }
 }
 
+function openReportCorrection(uid, date) {
+    if (!uid || !date) {
+        showNotification('Correction impossible pour cette cellule', 'warning');
+        return;
+    }
+
+    if (!window.attendanceSystem || typeof window.attendanceSystem.openCorrectionModal !== 'function') {
+        showNotification('Module de correction indisponible', 'error');
+        return;
+    }
+
+    window.attendanceSystem.openCorrectionModal(uid, date);
+}
+
+async function refreshCurrentReportAfterCorrection() {
+    if (lastReportData || lastLateData) {
+        await runEmbeddedReport();
+    }
+}
+
+window.openReportCorrection = openReportCorrection;
+window.refreshCurrentReportAfterCorrection = refreshCurrentReportAfterCorrection;
+
 async function runWeeklyReport(start, end) {
     const res = await fetch(`${REPORT_BASE_URL}/report?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
     const data = await res.json();
@@ -1641,8 +1681,16 @@ function renderWeeklyReport(data) {
             const date = col.date;
             const index = data.weekDays.indexOf(date);
             const day = getEmployeeDayByDate(emp, date, index);
-            const cls = { present:'dc-present', late:'dc-late', conge:'dc-conge', conge_demi:'dc-conge', mission:'dc-mission', incomplete:'dc-incomplete' }[day.status] || 'dc-absent';
-            return `<td class="day-cell ${cls}">${escapeHtml(day.displayText || '—')}</td>`;
+            const isIncomplete = day.status === 'incomplete' || normalizeText(day.displayText).includes('incomplet');
+            const isToday = date === new Date().toISOString().split('T')[0];
+            const cls = isIncomplete
+                ? 'dc-incomplete'
+                : ({ present:'dc-present', late:'dc-late', conge:'dc-conge', conge_demi:'dc-conge', mission:'dc-mission' }[day.status] || 'dc-absent');
+            const canCorrect = isIncomplete && !isToday && emp.uid !== null && emp.uid !== undefined;
+            const correctionAction = canCorrect
+                ? `<button type="button" class="report-correct-btn" title="Corriger le pointage" onclick="event.stopPropagation(); openReportCorrection('${emp.uid}', '${date}')"><i class="fas fa-pen"></i></button>`
+                : '';
+            return `<td class="day-cell ${cls}${canCorrect ? ' day-cell-correctable' : ''}" ${canCorrect ? `onclick="openReportCorrection('${emp.uid}', '${date}')"` : ''}>${escapeHtml(day.displayText || '—')}${correctionAction}</td>`;
         }).join('');
 
         const lateBadge = emp.lateCount > 0

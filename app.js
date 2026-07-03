@@ -574,14 +574,39 @@ class AttendanceSystem {
 
 
     openCorrectionModal(uid, date) {
-        const record = this.allData.find(r =>
+        let record = this.allData.find(r =>
             r.uid.toString() === uid.toString() && r.date === date
         );
 
         if (!record) {
-            this.showNotification('Enregistrement introuvable', 'error');
-            return;
+            const employee = this.allEmployees.find(e =>
+                e.uid !== null && e.uid !== undefined && e.uid.toString() === uid.toString()
+            );
+
+            if (!employee) {
+                this.showNotification('Employe introuvable pour cette correction', 'error');
+                return;
+            }
+
+            const dayName = new Date(date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long' });
+            record = {
+                uid: employee.uid,
+                userId: employee.matricule || '',
+                pointeuseUserId: employee.pointeuseUserId || '',
+                name: employee.name || '',
+                cardNo: employee.cardNo || employee.matricule || '',
+                date,
+                dayName: dayName ? dayName.charAt(0).toUpperCase() + dayName.slice(1) : '',
+                arrivalTime: '',
+                departureTime: '',
+                hoursWorked: '0.00',
+                status: 'Absent',
+                entries: [],
+                manuallyCorrected: false,
+            };
         }
+
+        const correctionTimes = this.getCorrectionInitialTimes(record);
 
         this.modalTitle.textContent = `Correction RH — ${record.name || 'Employé'} — ${this.formatDate(date)}`;
         this.modalBody.innerHTML = `
@@ -598,10 +623,10 @@ class AttendanceSystem {
                 </div>
                 <form id="correction-form" class="correction-form" onsubmit="event.preventDefault(); attendanceSystem.submitAttendanceCorrection('${record.uid}', '${record.date}')">
                     <label>Heure arrivée</label>
-                    <input id="correction-arrival" type="time" value="${record.arrivalTime || ''}" />
+                    <input id="correction-arrival" type="time" value="${correctionTimes.arrivalTime || ''}" />
 
                     <label>Heure départ</label>
-                    <input id="correction-departure" type="time" value="${record.departureTime || ''}" />
+                    <input id="correction-departure" type="time" value="${correctionTimes.departureTime || ''}" />
 
                     <label>Commentaire</label>
                     <textarea id="correction-comment" rows="3" placeholder="Exemple: oubli pointage départ"></textarea>
@@ -613,6 +638,33 @@ class AttendanceSystem {
                 </form>
             </div>`;
         this.modal.style.display = 'flex';
+    }
+
+    getCorrectionInitialTimes(record) {
+        let arrivalTime = record.arrivalTime || '';
+        let departureTime = record.departureTime || '';
+        const hasOnePunch = Array.isArray(record.entries) && record.entries.length === 1;
+
+        if (hasOnePunch) {
+            const singleTime = record.entries[0]?.time || arrivalTime || departureTime;
+            const minutes = this.toMinutes(singleTime);
+
+            if (minutes !== null && minutes >= 12 * 60) {
+                arrivalTime = '';
+                departureTime = singleTime;
+            } else if (minutes !== null) {
+                arrivalTime = singleTime;
+                departureTime = '';
+            }
+        }
+
+        return { arrivalTime, departureTime };
+    }
+
+    toMinutes(value) {
+        const match = String(value || '').match(/^(\d{1,2}):(\d{2})/);
+        if (!match) return null;
+        return Number(match[1]) * 60 + Number(match[2]);
     }
 
     async submitAttendanceCorrection(uid, date) {
@@ -641,6 +693,9 @@ class AttendanceSystem {
             this.showNotification('Correction enregistrée avec succès', 'success');
             this.closeModal();
             await this.loadAllData();
+            if (typeof window.refreshCurrentReportAfterCorrection === 'function') {
+                await window.refreshCurrentReportAfterCorrection();
+            }
         } catch (error) {
             console.error('Correction error:', error);
             this.showNotification(error.message || 'Erreur lors de la correction', 'error');
@@ -967,6 +1022,7 @@ class AttendanceSystem {
 let attendanceSystem;
 document.addEventListener('DOMContentLoaded', () => {
     attendanceSystem = new AttendanceSystem();
+    window.attendanceSystem = attendanceSystem;
 });
 
 // ── Additional styles ──────────────────────────────────────────
