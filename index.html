@@ -1023,6 +1023,9 @@ tbody tr:last-child td { border-bottom:none; }
                             <button class="btn" id="report-export-btn" onclick="exportReportCSV()" style="display:none">
                                 <i class="fas fa-file-arrow-down"></i> XLSX
                             </button>
+                            <button class="btn" id="report-export-cleanup-btn" onclick="exportReportCleanupXlsx()" style="display:none" title="Heures plafonnées à 40h/semaine (ou jours ouvrables × 8h si semaine incomplète)">
+                                <i class="fas fa-broom"></i> XLSX (plafonné)
+                            </button>
                         </div>
                     </div>
 
@@ -1040,6 +1043,9 @@ tbody tr:last-child td { border-bottom:none; }
                         <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
                             <button class="btn" id="report-export-btn-quick" onclick="exportReportCSV()" style="display:none">
                                 <i class="fas fa-file-arrow-down"></i> XLSX
+                            </button>
+                            <button class="btn" id="report-export-cleanup-btn-quick" onclick="exportReportCleanupXlsx()" style="display:none" title="Heures plafonnées à 40h/semaine (ou jours ouvrables × 8h si semaine incomplète)">
+                                <i class="fas fa-broom"></i> XLSX (plafonné)
                             </button>
                         </div>
                     </div>
@@ -1619,13 +1625,18 @@ function renderWeeklyReport(data) {
         <div class="rkpi rkpi-amber"><div class="rkpi-val">${totalLate}</div><div class="rkpi-lbl">Retards filtrés</div></div>`;
     document.getElementById('report-kpis').style.display = 'grid';
 
-    // Show the right export button for the active mode
+    // Show the right export buttons for the active mode (both the raw XLSX
+    // export and the capped "cleanup" export share the same quick/custom toggle)
     if (filterMode === 'quick') {
         document.getElementById('report-export-btn-quick').style.display = 'inline-flex';
+        document.getElementById('report-export-cleanup-btn-quick').style.display = 'inline-flex';
         document.getElementById('report-export-btn').style.display = 'none';
+        document.getElementById('report-export-cleanup-btn').style.display = 'none';
     } else {
         document.getElementById('report-export-btn').style.display = 'inline-flex';
+        document.getElementById('report-export-cleanup-btn').style.display = 'inline-flex';
         document.getElementById('report-export-btn-quick').style.display = 'none';
+        document.getElementById('report-export-cleanup-btn-quick').style.display = 'none';
     }
 
     document.getElementById('report-legend').style.display = 'flex';
@@ -2015,6 +2026,87 @@ function exportReportCSV() {
     } else {
         showNotification('Générez un rapport avant l\'export', 'warning');
     }
+}
+
+// A week can never legitimately need more than 40h. A week with fewer than
+// 5 working days (e.g. the report range stops mid-week at a month boundary)
+// is capped instead at workingDays * 8h, since it never fully qualifies as
+// a "5-day 40h week". Since workingDays never exceeds 5, this single
+// formula already covers both cases without a separate 40h special-case.
+function capWeeklyMinutes(totalMinutes, workingDays) {
+    const cap = Math.max(0, Number(workingDays || 0)) * 8 * 60;
+    return Math.min(Number(totalMinutes || 0), cap);
+}
+
+function exportReportCleanupXlsx() {
+    if (currentReportTab !== 'weekly' || !lastReportData) {
+        showNotification('Générez un rapport hebdomadaire avant l\'export plafonné', 'warning');
+        return;
+    }
+
+    const data = lastReportData;
+    const employees = filteredWeeklyEmployees.length ? filteredWeeklyEmployees : data.employees;
+
+    const reportColumns = buildReportColumns(data);
+    const weekEmployeeMap = buildWeekEmployeeMap(data);
+
+    const topHeader = ['Employé', 'Matricule'];
+    const bottomHeader = ['', ''];
+
+    reportColumns.forEach(col => {
+        if (col.type === 'week-summary') {
+            topHeader.push(`Synthese S${col.week.index} (plafonnee)`, '', '');
+            bottomHeader.push('Heures', 'Congés', 'Fériés');
+        } else {
+            const label = new Date(col.date + 'T00:00:00')
+                .toLocaleDateString('fr-FR', { weekday:'short', day:'2-digit', month:'2-digit' });
+            topHeader.push(label);
+            bottomHeader.push('');
+        }
+    });
+
+    topHeader.push('Total periode (plafonne)', '', '', 'Retards');
+    bottomHeader.push('Heures', 'Congés', 'Fériés', '');
+
+    const rows = employees.map(emp => {
+        const row = [emp.name, emp.cardNo || emp.matricule || ''];
+        let periodCappedMinutes = 0;
+
+        reportColumns.forEach(col => {
+            if (col.type === 'week-summary') {
+                const weekEmp = weekEmployeeMap.get(`${col.week.index}__${emp.uid}`);
+                const workingDays = Number(col.week.summary?.workingDays ?? col.week.weekDays.length ?? 0);
+                const cappedMinutes = capWeeklyMinutes(weekEmp?.totalMinutes || 0, workingDays);
+                periodCappedMinutes += cappedMinutes;
+                row.push(
+                    formatHoursNumber(cappedMinutes / 60),
+                    formatCongeDays(weekEmp?.congeDays || 0),
+                    Number(weekEmp?.holidayDays || 0)
+                );
+            } else {
+                const index = data.weekDays.indexOf(col.date);
+                row.push(String(getEmployeeDayByDate(emp, col.date, index).displayText || '').replace(/,/g, ';'));
+            }
+        });
+
+        row.push(
+            formatHoursNumber(periodCappedMinutes / 60),
+            formatCongeDays(emp.congeDays || 0),
+            Number(emp.holidayDays || 0),
+            emp.lateCount
+        );
+
+        return row;
+    });
+
+    downloadWeeklyReportXlsx(
+        [topHeader, bottomHeader, ...rows],
+        `rapport_semaine_plafonne_${data.start}_${data.end}.xlsx`,
+        'Rapport plafonne',
+        reportColumns
+    );
+
+    showNotification(`${employees.length} employés exportés (heures plafonnées)`, 'success');
 }
 
 function downloadWeeklyReportXlsx(rows, filename, sheetName, reportColumns) {
