@@ -10,7 +10,6 @@ const els = {
     loading: document.getElementById('loadingView'),
     login: document.getElementById('loginView'),
     requestPin: document.getElementById('requestPinView'),
-    setPin: document.getElementById('setPinView'),
     pointage: document.getElementById('pointageView'),
 
     loginMatricule: document.getElementById('loginMatricule'),
@@ -19,9 +18,6 @@ const els = {
 
     requestMatricule: document.getElementById('requestMatricule'),
     backToLoginBtn: document.getElementById('backToLoginBtn'),
-
-    setPinEmployeeName: document.getElementById('setPinEmployeeName'),
-    newPin: document.getElementById('newPin'),
 
     logoutBtn: document.getElementById('logoutBtn'),
     arrivalBtn: document.getElementById('arrivalBtn'),
@@ -33,7 +29,7 @@ const els = {
     message: document.getElementById('message'),
 };
 
-const VIEWS = ['loading', 'login', 'requestPin', 'setPin', 'pointage'];
+const VIEWS = ['loading', 'login', 'requestPin', 'pointage'];
 
 function showView(view) {
     VIEWS.forEach(v => els[v].classList.toggle('hidden', v !== view));
@@ -178,7 +174,7 @@ els.backToLoginBtn.addEventListener('click', () => {
     showView('login');
 });
 
-// ── Request PIN-setup email ─────────────────────────────────────
+// ── Request a new PIN by email ───────────────────────────────────
 
 els.requestPin.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -195,52 +191,7 @@ els.requestPin.addEventListener('submit', async (e) => {
         return;
     }
 
-    showMessage(body.message || 'Si ce matricule existe, un email a été envoyé.', 'success');
-});
-
-// ── Set PIN via emailed token ────────────────────────────────────
-
-let pendingSetPinToken = null;
-
-async function initSetPinView(token) {
-    showView('loading');
-    const { ok, body } = await callApi(`/pin/token/${encodeURIComponent(token)}`);
-
-    if (!ok) {
-        const reasons = {
-            invalid_token: "Ce lien n'est pas valide.",
-            already_used: 'Ce lien a déjà été utilisé.',
-            expired: 'Ce lien a expiré, faites une nouvelle demande.',
-        };
-        showMessage(reasons[body.error] || 'Lien invalide.', 'error');
-        showView('login');
-        return;
-    }
-
-    pendingSetPinToken = token;
-    els.setPinEmployeeName.textContent = `Bonjour ${body.fullName}`;
-    showView('setPin');
-}
-
-els.setPin.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    clearMessage();
-
-    const pin = els.newPin.value.trim();
-    const { ok, body } = await callApi('/pin/confirm', {
-        method: 'POST',
-        body: JSON.stringify({ token: pendingSetPinToken, pin }),
-    });
-
-    if (!ok) {
-        showMessage(body.error || 'Erreur lors de la mise à jour du code.', 'error');
-        return;
-    }
-
-    // Clean the token out of the URL so a refresh/bookmark doesn't replay it.
-    window.history.replaceState({}, '', window.location.pathname);
-    showMessage('Code enregistré. Vous pouvez maintenant vous connecter.', 'success');
-    showView('login');
+    showMessage(body.message || 'Si ce matricule existe, un code a été envoyé par email.', 'success');
 });
 
 // ── Logout / punch buttons ───────────────────────────────────────
@@ -258,14 +209,6 @@ els.departureBtn.addEventListener('click', () => punch('departure'));
 
 (async function init() {
     showView('loading');
-
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-
-    if (token) {
-        await initSetPinView(token);
-        return;
-    }
 
     if (getSessionToken()) {
         await loadStatus();

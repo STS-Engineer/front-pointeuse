@@ -198,20 +198,12 @@
             <button type="button" id="showRequestPinBtn" class="btn btn-link">Définir ou réinitialiser mon code</button>
         </form>
 
-        <!-- Request a PIN-setup email -->
+        <!-- Request a new PIN by email -->
         <form id="requestPinView" class="hidden">
             <label for="requestMatricule">Matricule</label>
             <input id="requestMatricule" type="text" autocomplete="username" required>
-            <button type="submit" class="btn btn-primary">Recevoir un lien par email</button>
+            <button type="submit" class="btn btn-primary">Recevoir mon code par email</button>
             <button type="button" id="backToLoginBtn" class="btn btn-link">Retour à la connexion</button>
-        </form>
-
-        <!-- Set a new PIN (arrived here via the emailed link, ?token=...) -->
-        <form id="setPinView" class="hidden">
-            <div class="employee-name" id="setPinEmployeeName"></div>
-            <label for="newPin">Nouveau code (6 chiffres)</label>
-            <input id="newPin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required>
-            <button type="submit" class="btn btn-primary">Enregistrer mon code</button>
         </form>
 
         <!-- Pointage dashboard -->
