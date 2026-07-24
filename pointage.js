@@ -153,8 +153,10 @@ els.login.addEventListener('submit', async (e) => {
             showMessage("Aucun code défini pour ce matricule. Utilisez « Définir ou réinitialiser mon code ».", 'error');
         } else if (status === 404) {
             showMessage("Matricule inconnu ou compte inactif.", 'error');
-        } else {
+        } else if (status === 401) {
             showMessage("Matricule ou code incorrect.", 'error');
+        } else {
+            showMessage("Erreur de configuration du serveur. Contactez l'administrateur.", 'error');
         }
         return;
     }
