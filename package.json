@@ -8,7 +8,12 @@
     "build": "echo \"Build frontend\" && exit 0",
     "test": "echo \"Tests frontend\" && exit 0"
   },
-  "keywords": ["frontend", "attendance", "zkteco", "dashboard"],
+  "keywords": [
+    "frontend",
+    "attendance",
+    "zkteco",
+    "dashboard"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {

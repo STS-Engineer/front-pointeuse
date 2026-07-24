@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pointage — Espace employé</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --white:#ffffff;
+            --gray-50:#f9fafb;
+            --gray-100:#f3f4f6;
+            --gray-200:#e5e7eb;
+            --gray-400:#9ca3af;
+            --gray-500:#6b7280;
+            --gray-700:#374151;
+            --gray-900:#111827;
+            --blue-600:#2563eb;
+            --blue-700:#1d4ed8;
+            --green-600:#16a34a;
+            --green-50:#f0fdf4;
+            --amber-600:#d97706;
+            --amber-50:#fffbeb;
+            --red-600:#dc2626;
+            --red-50:#fef2f2;
+            --font:'Geist', -apple-system, BlinkMacSystemFont, sans-serif;
+            --mono:'Geist Mono', 'Fira Code', monospace;
+            --radius:10px;
+            --shadow:0 4px 20px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.06);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gray-50);
+            font-family: var(--font);
+            color: var(--gray-900);
+            padding: 24px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 32px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0 0 4px;
+        }
+
+        .subtitle {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin: 0 0 24px;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin: 14px 0 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--gray-200);
+            font-family: var(--mono);
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--blue-600);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: none;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity .15s;
+            margin-top: 14px;
+        }
+
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn:not(:disabled):hover { opacity: .9; }
+
+        .btn-primary {
+            background: var(--gray-900);
+            color: var(--white);
+        }
+
+        .btn-arrival {
+            background: var(--green-600);
+            color: var(--white);
+        }
+
+        .btn-departure {
+            background: var(--amber-600);
+            color: var(--white);
+        }
+
+        .btn-link {
+            background: transparent;
+            color: var(--gray-500);
+            font-size: 13px;
+            text-decoration: underline;
+            padding: 8px;
+            margin-top: 6px;
+        }
+
+        .employee-name {
+            font-weight: 600;
+            font-size: 17px;
+            margin-bottom: 2px;
+        }
+
+        .employee-date {
+            color: var(--gray-500);
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+
+        .status-row .label { color: var(--gray-500); }
+        .status-row .value { font-weight: 600; }
+
+        .message {
+            margin-top: 16px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .message.error { display: block; background: var(--red-50); color: var(--red-600); }
+        .message.success { display: block; background: var(--green-50); color: var(--green-600); }
+
+        .hidden { display: none !important; }
+
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid var(--gray-200);
+            border-top-color: var(--gray-500);
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Pointage</h1>
+        <p class="subtitle" id="subtitle">Connectez-vous avec votre matricule et votre code pour pointer votre arrivée ou votre départ.</p>
+
+        <div id="loadingView" class="spinner"></div>
+
+        <!-- Login: matricule + PIN -->
+        <form id="loginView" class="hidden">
+            <label for="loginMatricule">Matricule</label>
+            <input id="loginMatricule" type="text" autocomplete="username" required>
+            <label for="loginPin">Code (6 chiffres)</label>
+            <input id="loginPin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="current-password" required>
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+            <button type="button" id="showRequestPinBtn" class="btn btn-link">Définir ou réinitialiser mon code</button>
+        </form>
+
+        <!-- Request a PIN-setup email -->
+        <form id="requestPinView" class="hidden">
+            <label for="requestMatricule">Matricule</label>
+            <input id="requestMatricule" type="text" autocomplete="username" required>
+            <button type="submit" class="btn btn-primary">Recevoir un lien par email</button>
+            <button type="button" id="backToLoginBtn" class="btn btn-link">Retour à la connexion</button>
+        </form>
+
+        <!-- Set a new PIN (arrived here via the emailed link, ?token=...) -->
+        <form id="setPinView" class="hidden">
+            <div class="employee-name" id="setPinEmployeeName"></div>
+            <label for="newPin">Nouveau code (6 chiffres)</label>
+            <input id="newPin" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" autocomplete="new-password" required>
+            <button type="submit" class="btn btn-primary">Enregistrer mon code</button>
+        </form>
+
+        <!-- Pointage dashboard -->
+        <div id="pointageView" class="hidden">
+            <div class="employee-name" id="employeeName"></div>
+            <div class="employee-date" id="employeeDate"></div>
+
+            <div class="status-row">
+                <span class="label">Arrivée</span>
+                <span class="value" id="arrivalValue">—</span>
+            </div>
+            <div class="status-row">
+                <span class="label">Départ</span>
+                <span class="value" id="departureValue">—</span>
+            </div>
+
+            <button id="arrivalBtn" class="btn btn-arrival">Pointer l'arrivée</button>
+            <button id="departureBtn" class="btn btn-departure">Pointer le départ</button>
+            <button id="logoutBtn" class="btn btn-link">Se déconnecter</button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script src="pointage.js"></script>
+</body>
+</html>
