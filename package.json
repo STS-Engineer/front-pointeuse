@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Interface d'administration des présences ZKTeco",
   "scripts": {
-    "start": "npx live-server --port=8080 --host=localhost --cors --no-browser --entry-file=index.html",
+    "start": "node server.js",
     "dev": "npx live-server --port=8080 --host=localhost --cors --no-browser --entry-file=index.html --watch=.",
     "build": "echo \"Build frontend\" && exit 0",
     "test": "echo \"Tests frontend\" && exit 0"
@@ -16,6 +16,9 @@
   ],
   "author": "Your Name",
   "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
   "devDependencies": {
     "live-server": "^1.2.2"
   }

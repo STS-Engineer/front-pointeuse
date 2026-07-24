@@ -62,4 +62,11 @@ jobs:
           app-name: 'pointeuse-sts'
           slot-name: 'Production'
           package: .
-          
+
+      - name: Set explicit startup command
+        run: |
+          RESOURCE_GROUP=$(az webapp list --query "[?name=='pointeuse-sts'].resourceGroup" -o tsv)
+          az webapp config set \
+            --name pointeuse-sts \
+            --resource-group "$RESOURCE_GROUP" \
+            --startup-file "npm start"
